@@ -1,0 +1,16 @@
+# data - never commit
+data/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.pytest_cache/
+.ruff_cache/
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
