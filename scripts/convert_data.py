@@ -168,6 +168,7 @@ def generate_fixture(
     events_df: pd.DataFrame,
     fixture_dir: Path,
     sample_size: int,
+    processed_dir: Path | None = None,
 ) -> None:
     """Create a small but referentially consistent sample for CI tests.
 
@@ -327,6 +328,56 @@ def generate_fixture(
     events_sample = events_df[ev_mask].copy()
     _save("Audit_Events", events_sample)
 
+    # ------------------------------------------------------------------
+    # Ground Truth tables (for evaluation in tests/fixtures/gt/)
+    # ------------------------------------------------------------------
+    if processed_dir is not None:
+        gt_dir = processed_dir / "gt"
+        fixture_gt_dir = fixture_dir / "gt"
+        links_file = gt_dir / "GT_IdentityLinks.parquet"
+        labels_file = gt_dir / "GT_Labels.parquet"
+
+        if links_file.exists() and labels_file.exists():
+            fixture_gt_dir.mkdir(parents=True, exist_ok=True)
+            raw_gt_links = pd.read_parquet(links_file)
+            raw_gt_labels = pd.read_parquet(labels_file)
+
+            # Keep links for sampled employees
+            gt_links_sample = raw_gt_links[raw_gt_links["identity_id"].isin(sample_eids)].copy()
+
+            # Mask out accounts that are not in the generated fixture tables
+            gt_links_sample["ad_account_id"] = gt_links_sample["ad_account_id"].where(
+                gt_links_sample["ad_account_id"].isin(ad_account_ids), None
+            )
+            gt_links_sample["aws_user_id"] = gt_links_sample["aws_user_id"].where(
+                gt_links_sample["aws_user_id"].isin(aws_user_ids), None
+            )
+            gt_links_sample["okta_id"] = gt_links_sample["okta_id"].where(
+                gt_links_sample["okta_id"].isin(okta_ids), None
+            )
+
+            # Drop GT fixture rows that have NO account IDs remaining
+            has_any_account = (
+                gt_links_sample["ad_account_id"].notna()
+                | gt_links_sample["aws_user_id"].notna()
+                | gt_links_sample["okta_id"].notna()
+            )
+            gt_links_sample = gt_links_sample[has_any_account].copy()
+
+            # Make GT_Labels in the fixture match the remaining GT_IdentityLinks
+            remaining_ids = set(gt_links_sample["identity_id"].tolist())
+            gt_labels_sample = raw_gt_labels[
+                raw_gt_labels["identity_id"].isin(remaining_ids)
+            ].copy()
+
+            gt_links_sample.to_parquet(fixture_gt_dir / "GT_IdentityLinks.parquet", index=False)
+            gt_labels_sample.to_parquet(fixture_gt_dir / "GT_Labels.parquet", index=False)
+            logger.info(
+                "  fixture/gt/: GT_IdentityLinks (%d rows), GT_Labels (%d rows)",
+                len(gt_links_sample),
+                len(gt_labels_sample),
+            )
+
     logger.info("Fixture generation complete.")
 
 
@@ -379,7 +430,7 @@ def main() -> None:
     # ------------------------------------------------------------------
     if args.fixture:
         logger.info("=== Step 3: Generating CI fixture ===")
-        generate_fixture(core_dfs, events_df, fixture_dir, sample_size)
+        generate_fixture(core_dfs, events_df, fixture_dir, sample_size, processed_dir=processed_dir)
         measure_load_times(processed_dir, fixture_dir)
 
     logger.info("All done. Processed data is in: %s", processed_dir.resolve())

@@ -306,9 +306,10 @@ def match_account(
 
     # Rule 5: Fuzzy name / username matching fallback
     if clean_name_query:
-        best_emp: str | None = None
+        candidates_at_best: list[str] = []
         best_score = 0.0
         second_best_score = 0.0
+        best_emp: str | None = None
 
         for profile in hr_index["name_profiles"]:
             score = compute_name_similarity(clean_name_query, profile)
@@ -316,19 +317,26 @@ def match_account(
                 second_best_score = best_score
                 best_score = score
                 best_emp = profile["employee_id"]
+                candidates_at_best = [profile["employee_id"]]
+            elif score == best_score and best_score > 0.0:
+                candidates_at_best.append(profile["employee_id"])
             elif score > second_best_score:
                 second_best_score = score
 
         if best_emp and best_score >= fuzzy_threshold:
-            # Check for ambiguous tie (two distinct employees with the same top score)
-            if best_score == second_best_score and best_score < 100.0:
+            # Check for ambiguous match: multiple employees share the top score
+            # or the top score is not clearly separated from the runner-up (< 3.0 points).
+            if len(candidates_at_best) > 1 or (best_score - second_best_score < 3.0):
                 return AccountResolution(
                     is_resolved=False,
                     platform=platform,
                     account_id=account_id,
                     account_type=account_type,
-                    unresolved_reason="signal_conflict",
-                    detail=f"Ambiguous fuzzy match: multiple employees share top score {best_score:.1f}",
+                    unresolved_reason="ambiguous_name",
+                    detail=(
+                        f"Ambiguous name match: {len(candidates_at_best)} employees share top score "
+                        f"{best_score:.1f} (second best: {second_best_score:.1f})"
+                    ),
                 )
 
             return AccountResolution(

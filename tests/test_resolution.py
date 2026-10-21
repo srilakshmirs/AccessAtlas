@@ -227,6 +227,43 @@ def test_signal_conflict_id_vs_name(sample_hr_df: pd.DataFrame) -> None:
     assert res.unresolved_reason == "signal_conflict"
 
 
+def test_ambiguous_name_unresolved(sample_hr_df: pd.DataFrame) -> None:
+    """A name match that could belong to two or more employees routes to ambiguous_name."""
+    # Add a second Alice Smith to sample HR
+    duplicate_hr = pd.concat(
+        [
+            sample_hr_df,
+            pd.DataFrame(
+                [
+                    {
+                        "employee_id": "E100004",
+                        "first_name": "Alice",
+                        "last_name": "Smith",
+                        "email": "alice.smith2@acme-corp.example",
+                        "worker_type": "employee",
+                        "status": "active",
+                    }
+                ]
+            ),
+        ],
+        ignore_index=True,
+    )
+    hr_index = build_hr_index(duplicate_hr)
+    res = match_account(
+        platform="aws",
+        account_id="AWS-AMBIGUOUS-01",
+        account_type="human",
+        raw_id=None,
+        raw_email=None,
+        raw_username="asmith",
+        raw_display_name=None,
+        hr_index=hr_index,
+    )
+    assert res.is_resolved is False
+    assert res.unresolved_reason == "ambiguous_name"
+    assert "Ambiguous name match" in res.detail
+
+
 def test_resolve_identities_pipeline(sample_hr_df: pd.DataFrame) -> None:
     """Full pipeline test with human, service, orphan, and conflicting accounts."""
     ad_df = pd.DataFrame(

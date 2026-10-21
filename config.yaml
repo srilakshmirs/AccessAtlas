@@ -2,20 +2,14 @@ paths:
   raw: data/raw
   processed: data/processed
   fixtures: tests/fixtures
-
 logging:
   level: INFO
-  format: "%(asctime)s %(name)-20s %(levelname)-8s %(message)s"
-
+  format: '%(asctime)s %(name)-20s %(levelname)-8s %(message)s'
 ingestion:
   core_file: AccessAtlas_Dataset_Core.xlsx
   events_files:
-    - AccessAtlas_Dataset_Events_Part1.xlsx
-    - AccessAtlas_Dataset_Events_Part2.xlsx
-  # Number of HR employees to include in the fixture sample.
-  # All other tables are filtered to rows that reference those employees.
+  - AccessAtlas_Dataset_Events_Part1.xlsx
+  - AccessAtlas_Dataset_Events_Part2.xlsx
   fixture_sample_size: 200
-
 resolution:
-  fuzzy_threshold: 85.0
-
+  fuzzy_threshold: 70.0
