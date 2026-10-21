@@ -1,7 +1,8 @@
-"""Shared test configuration and fixtures.
+"""Shared pytest configuration and session-scoped fixtures.
 
-The FIXTURE_DIR constant points to tests/fixtures/, which is committed to git
-so CI can run without the full data/processed/ directory.
+Only pytest-specific items live here (fixtures, hooks).
+Plain constants belong in tests/helpers.py so they can be imported at
+module collection time without depending on pytest fixture machinery.
 """
 
 from __future__ import annotations
@@ -12,33 +13,6 @@ import pytest
 
 # tests/fixtures/ — committed to git; built once with convert_data.py --fixture
 FIXTURE_DIR = Path(__file__).parent / "fixtures"
-
-# All tables that should have a fixture file.
-CORE_FIXTURE_TABLES = [
-    "HR_Records",
-    "HR_RoleChanges",
-    "HR_Offboarding",
-    "AD_Users",
-    "AD_Groups",
-    "AD_GroupMembership",
-    "AWS_Users",
-    "AWS_Groups",
-    "AWS_Policies",
-    "AWS_UserGroups",
-    "AWS_PolicyAttach",
-    "Okta_Users",
-    "Okta_Groups",
-    "Okta_GroupMembership",
-    "Okta_AdminRoles",
-    "Okta_Apps",
-    "Okta_AWS_Federation",
-    "Tier_Mapping",
-    "API_Tokens",
-    "Exceptions",
-    "OnCall_Roster",
-    "Scheduled_Jobs",
-    "Audit_Events",
-]
 
 
 @pytest.fixture(scope="session")
