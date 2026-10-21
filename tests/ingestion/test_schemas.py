@@ -9,7 +9,7 @@ import pytest
 
 from accessatlas.ingestion.loader import load_table
 from accessatlas.ingestion.schemas import SCHEMAS
-from tests.conftest import CORE_FIXTURE_TABLES
+from tests.helpers import CORE_FIXTURE_TABLES
 
 # Tables we have schemas for (excludes reference tables with no schema yet)
 VALIDATED_TABLES = [t for t in CORE_FIXTURE_TABLES if t in SCHEMAS]

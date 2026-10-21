@@ -47,6 +47,10 @@ python scripts/convert_data.py --fixture
 
 Output goes to `data/processed/` (gitignored) and `tests/fixtures/` (committed).
 
+> **Note:** Converting the events files reads ~32 MB of XLSX via openpyxl.
+> Measured on Intel Core 7 150U / 15 GB RAM: median **80 s** for the XLSX read.
+> The resulting Parquet file loads in **0.070 s** (warm read) at runtime.
+
 ### 4. Run tests
 
 ```bash
@@ -91,7 +95,7 @@ docker-compose.yml  Runs backend (and frontend in M4)
 
 | # | Branch | Status |
 |---|--------|--------|
-| M1 | `m1-ingestion` | ✅ Done |
+| M1 | `m1-ingestion` → `m1-cleanup` | ✅ Done |
 | M2 | `m2-resolution` | 🔜 |
 | M3 | `m3-graph` | 🔜 |
 | M4 | `m4-rules-api` | 🔜 |

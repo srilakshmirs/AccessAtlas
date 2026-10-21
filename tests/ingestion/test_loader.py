@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from accessatlas.ingestion.loader import load_all_core, load_table
-from tests.conftest import CORE_FIXTURE_TABLES
+from tests.helpers import CORE_FIXTURE_TABLES
 
 
 @pytest.mark.parametrize("table_name", CORE_FIXTURE_TABLES)

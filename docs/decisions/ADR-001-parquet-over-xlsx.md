@@ -15,26 +15,34 @@ it would need to read these files.
 Convert XLSX → Parquet once with `scripts/convert_data.py`. All runtime code
 reads Parquet files only.
 
-## Measured load times (on this machine)
+## Measured load times
 
-| File | Format | Rows | Load time |
-|------|--------|------|-----------|
-| Audit_Events (both parts) | XLSX (openpyxl) | 372,556 | ~76 s (measured during conversion) |
-| Audit_Events (both parts) | Parquet (pyarrow) | 372,556 | **1.036 s** |
-| Audit_Events fixture | Parquet (pyarrow) | 11,575 | **0.005 s** |
+Measured on: **Intel Core 7 150U, 15 GB RAM, Windows 10, Python 3.11.9**  
+Method: 3 consecutive runs, median reported.
 
-> Times measured on the development machine running this project.
-> Results will vary by hardware and disk speed.
+| Operation | Format | Rows | Run 1 | Run 2 | Run 3 | **Median** |
+|-----------|--------|------|-------|-------|-------|------------|
+| Both events files | XLSX (openpyxl) | 372,556 | 90.058 s | 80.367 s | 80.007 s | **80.367 s** |
+| Full Audit_Events | Parquet (pyarrow) | 372,556 | 1.055 s | 0.070 s | 0.059 s | **0.070 s** |
+| Fixture Audit_Events | Parquet (pyarrow) | 11,575 | 0.025 s | 0.006 s | 0.005 s | **0.006 s** |
+
+**Note on the Parquet first-run spike (1.055 s):** The first read of a cold
+file goes to disk; the OS then caches the pages. Runs 2 and 3 read from the
+OS page cache (warm reads). The median of 0.070 s represents the typical
+warm-read cost during normal operation. XLSX shows no such cache benefit
+because openpyxl parses the XML cell-by-cell every time regardless.
 
 ## Consequences
 
-- **Positive:** Runtime is fast; tests using the small fixture run in <1 s.
+- **Positive:** Warm Parquet read is ~1,150× faster than XLSX (80.367 s ÷ 0.070 s).
 - **Positive:** Parquet stores dtypes (datetime, bool, int) so no re-coercion at load time.
+- **Positive:** Fixture read at 0.006 s means the full test suite runs in under 2 seconds.
 - **Negative:** Requires a one-time setup step (`python scripts/convert_data.py`).
 - **Negative:** Two copies of the data exist during development (XLSX + Parquet). Both are gitignored.
 
 ## Alternatives considered
 
-- **Read XLSX at runtime:** Too slow (~76 s for events alone); unacceptable for API startup.
-- **SQLite:** Would work for relational queries but adds a new dependency and an ETL step. Parquet integrates directly with pandas without a query layer.
+- **Read XLSX at runtime:** Too slow (~80 s per API startup for events alone).
+- **SQLite:** Would work for relational queries but adds a new dependency and an
+  ETL step. Parquet integrates directly with pandas without a query layer.
 - **CSV:** Human-readable but larger on disk and loses datetime dtype information.
