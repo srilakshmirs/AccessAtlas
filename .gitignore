@@ -9,8 +9,16 @@ venv/
 .env
 .pytest_cache/
 .ruff_cache/
+*.egg-info/
+dist/
+build/
 
 # editors / OS
 .vscode/
 .idea/
 .DS_Store
+Thumbs.db
+
+# frontend build output (added in M4)
+frontend/node_modules/
+frontend/dist/
