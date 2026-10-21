@@ -1,0 +1,18 @@
+version: "3.9"
+# docker-compose.yml — M1 stub
+# The frontend service is added in M4. For now only the backend is defined.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the processed data directory so the container can read Parquet files.
+      # Run `python scripts/convert_data.py` on the host first.
+      - ./data:/app/data:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
