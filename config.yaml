@@ -15,3 +15,7 @@ ingestion:
   # Number of HR employees to include in the fixture sample.
   # All other tables are filtered to rows that reference those employees.
   fixture_sample_size: 200
+
+resolution:
+  fuzzy_threshold: 85.0
+
