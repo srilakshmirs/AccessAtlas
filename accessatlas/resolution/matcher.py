@@ -333,6 +333,7 @@ def match_account(
                     account_id=account_id,
                     account_type=account_type,
                     unresolved_reason="ambiguous_name",
+                    employee_id=",".join(candidates_at_best) if candidates_at_best else best_emp,
                     detail=(
                         f"Ambiguous name match: {len(candidates_at_best)} employees share top score "
                         f"{best_score:.1f} (second best: {second_best_score:.1f})"

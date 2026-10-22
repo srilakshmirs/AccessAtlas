@@ -431,6 +431,37 @@ def test_nested_group_escalation_caveat_unresolved_account(empty_suppression: Su
     assert "artifact of an unlinked account" in findings[0].confidence_caveat
 
 
+def test_nested_group_escalation_demote_candidate_employee_id(
+    empty_suppression: SuppressionEngine,
+):
+    """Hidden escalation where identity is among ambiguous candidates must be demoted to low."""
+    priv_df = pd.DataFrame(
+        [
+            {
+                "identity_id": "E10001",
+                "hidden_escalation": True,
+                "overall_effective_tier": 1,
+                "ad_effective_tier": 1,
+                "overall_grant_path": "AD: Engineers -> Nested Admins",
+            }
+        ]
+    )
+    unres_df = pd.DataFrame(
+        [
+            {
+                "account_id": "AWS-USR-999",
+                "reason": "ambiguous_name",
+                "candidate_employee_id": "E10001,E10002",
+            }
+        ]
+    )
+    findings = detect_nested_group_escalation(priv_df, unres_df, empty_suppression)
+    assert len(findings) == 1
+    assert findings[0].severity == "low"
+    assert findings[0].confidence_caveat is not None
+    assert "artifact of an unlinked account" in findings[0].confidence_caveat
+
+
 # ==============================================================================
 # 7. cross_platform_admin tests
 # ==============================================================================

@@ -371,11 +371,13 @@ def detect_nested_group_escalation(
         if not unresolved_accounts.empty
         else set()
     )
-    unres_emp_ids = (
-        set(unresolved_accounts["candidate_employee_id"].dropna().astype(str))
-        if not unresolved_accounts.empty and "candidate_employee_id" in unresolved_accounts.columns
-        else set()
-    )
+    unres_emp_ids: set[str] = set()
+    if not unresolved_accounts.empty and "candidate_employee_id" in unresolved_accounts.columns:
+        for val in unresolved_accounts["candidate_employee_id"].dropna():
+            for emp in str(val).split(","):
+                clean_emp = emp.strip()
+                if clean_emp:
+                    unres_emp_ids.add(clean_emp)
 
     escalations = privilege_df[privilege_df["hidden_escalation"].fillna(False).astype(bool)]
 
