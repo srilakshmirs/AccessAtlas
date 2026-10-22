@@ -1,5 +1,7 @@
 """Tests for M4 scenario metrics evaluation."""
+from pathlib import Path
 
+import pytest
 import pandas as pd
 
 from accessatlas.evaluation.scenario_metrics import (
@@ -8,7 +10,10 @@ from accessatlas.evaluation.scenario_metrics import (
 )
 from accessatlas.rules.models import Finding
 
-
+@pytest.mark.skipif(
+    not Path("data/processed/gt").exists(),
+    reason="Full GT data is not available in CI (data/ is gitignored)",
+)
 def test_load_gt_scenario_data():
     """Verify that GT scenario data loads valid DataFrames."""
     gt_labels, gt_links = load_gt_scenario_data()
