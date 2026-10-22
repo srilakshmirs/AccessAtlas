@@ -12,12 +12,30 @@ from accessatlas.evaluation.identity_metrics import (
     load_gt_identity_data,
     tune_fuzzy_threshold,
 )
+from accessatlas.evaluation.privilege_metrics import (
+    EscalationMetrics,
+    KindPrivilegeMetrics,
+    PathAccuracy,
+    PrivilegeEvaluationReport,
+    TierAccuracy,
+    evaluate_privilege_resolution,
+    load_gt_privilege_data,
+    run_full_privilege_evaluation,
+)
 
 __all__ = [
+    "EscalationMetrics",
     "EvaluationReport",
     "KindMetrics",
+    "KindPrivilegeMetrics",
+    "PathAccuracy",
+    "PrivilegeEvaluationReport",
     "SignalMetrics",
+    "TierAccuracy",
     "evaluate_identity_resolution",
+    "evaluate_privilege_resolution",
     "load_gt_identity_data",
+    "load_gt_privilege_data",
+    "run_full_privilege_evaluation",
     "tune_fuzzy_threshold",
 ]
