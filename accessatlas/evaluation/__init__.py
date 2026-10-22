@@ -22,6 +22,14 @@ from accessatlas.evaluation.privilege_metrics import (
     load_gt_privilege_data,
     run_full_privilege_evaluation,
 )
+from accessatlas.evaluation.scenario_metrics import (
+    ScenarioMetrics,
+    SplitEvaluationReport,
+    TrapMetrics,
+    evaluate_scenario_findings,
+    load_gt_scenario_data,
+    run_full_scenario_evaluation,
+)
 
 __all__ = [
     "EscalationMetrics",
@@ -30,12 +38,18 @@ __all__ = [
     "KindPrivilegeMetrics",
     "PathAccuracy",
     "PrivilegeEvaluationReport",
+    "ScenarioMetrics",
     "SignalMetrics",
+    "SplitEvaluationReport",
     "TierAccuracy",
+    "TrapMetrics",
     "evaluate_identity_resolution",
     "evaluate_privilege_resolution",
+    "evaluate_scenario_findings",
     "load_gt_identity_data",
     "load_gt_privilege_data",
+    "load_gt_scenario_data",
     "run_full_privilege_evaluation",
+    "run_full_scenario_evaluation",
     "tune_fuzzy_threshold",
 ]

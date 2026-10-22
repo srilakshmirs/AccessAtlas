@@ -367,8 +367,13 @@ def detect_nested_group_escalation(
 
     # Pre-index accounts present in unresolved table
     unres_acc_ids = (
-        set(unresolved_accounts["account_id"].astype(str))
+        set(unresolved_accounts["account_id"].dropna().astype(str))
         if not unresolved_accounts.empty
+        else set()
+    )
+    unres_emp_ids = (
+        set(unresolved_accounts["candidate_employee_id"].dropna().astype(str))
+        if not unresolved_accounts.empty and "candidate_employee_id" in unresolved_accounts.columns
         else set()
     )
 
@@ -397,16 +402,19 @@ def detect_nested_group_escalation(
             continue
 
         caveat = None
+        severity = "high"
         # Check if identity has an account in M2's unresolved table
-        has_unresolved = False
-        for acc_col in ["ad_account_id", "aws_user_id", "okta_id"]:
-            acc = row.get(acc_col)
-            if pd.notna(acc) and str(acc) in unres_acc_ids:
-                has_unresolved = True
-                break
+        has_unresolved = (iid in unres_emp_ids) or (iid in unres_acc_ids)
+        if not has_unresolved:
+            for acc_col in ["ad_account_id", "aws_user_id", "okta_id"]:
+                acc = row.get(acc_col)
+                if pd.notna(acc) and str(acc) in unres_acc_ids:
+                    has_unresolved = True
+                    break
 
         if has_unresolved:
             caveat = "Identity has accounts in M2 unresolved table; escalation may be an artifact of an unlinked account."
+            severity = "low"
 
         findings.append(
             Finding(
@@ -414,7 +422,7 @@ def detect_nested_group_escalation(
                 rule="nested_group_escalation",
                 identity_id=iid,
                 platforms=plats,
-                severity="high",
+                severity=severity,
                 evidence=[
                     f"Hidden escalation detected: effective tier {row['overall_effective_tier']} reached via nesting or federation."
                 ],
@@ -459,9 +467,9 @@ def detect_cross_platform_admin(
                     rule="cross_platform_admin",
                     identity_id=iid,
                     platforms=priv_plats,
-                    severity="high",
+                    severity="medium",
                     evidence=[
-                        f"Identity holds administrative tier <= 1 across {len(priv_plats)} platforms: {', '.join(priv_plats)}."
+                        f"Privilege concentration: identity holds administrative tier <= 1 across {len(priv_plats)} platforms: {', '.join(priv_plats)}."
                     ],
                     recommended_action="Separate administrative duties or enforce dual-authorization across disparate cloud platforms.",
                 )

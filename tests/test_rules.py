@@ -426,6 +426,7 @@ def test_nested_group_escalation_caveat_unresolved_account(empty_suppression: Su
 
     findings = detect_nested_group_escalation(priv_df, unres_df, empty_suppression)
     assert len(findings) == 1
+    assert findings[0].severity == "low"
     assert findings[0].confidence_caveat is not None
     assert "artifact of an unlinked account" in findings[0].confidence_caveat
 
@@ -450,6 +451,7 @@ def test_cross_platform_admin_positive(empty_suppression: SuppressionEngine):
     findings = detect_cross_platform_admin(priv_df, empty_suppression)
     assert len(findings) == 1
     assert findings[0].rule == "cross_platform_admin"
+    assert findings[0].severity == "medium"
     assert set(findings[0].platforms) == {"ad", "aws"}
 
 
