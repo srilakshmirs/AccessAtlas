@@ -19,7 +19,7 @@ which module uses it, and a one-sentence explanation for a guide/examiner.
 | **tqdm** | ≥4.66 | Progress bar for the one-time XLSX conversion; makes it clear that the ~2-minute events conversion is still running. | `scripts/convert_data.py` | tqdm adds a progress bar to loops so the user can see how far along the data conversion is. |
 | **PyYAML** | ≥6.0 | Reads `config.yaml`; avoids hard-coded paths in source files. Alternatives: `tomllib` (Python 3.11 stdlib, but TOML is less readable for nested config). | `accessatlas/utils.py` | PyYAML reads our YAML configuration file so that paths and settings can be changed without editing source code. |
 | **RapidFuzz** | ≥3.6 | Fast fuzzy string matching for identity resolution (M2); C++ backend via wheels, significantly faster than `fuzzywuzzy` and does not require `python-Levenshtein`. Evaluates name/handle similarity with an ambiguity tie-breaker. | `resolution/`, `evaluation/` | RapidFuzz computes string similarity scores between usernames across platforms so we can match identities even when spellings or formats differ. |
-| **NetworkX** | ≥3.2 | Directed graph library for the privilege graph (M3); handles cycles (via `simple_cycles`), shortest paths and graph traversal natively. | `graph/` (M3) | NetworkX lets us model identities, groups and policies as a graph so we can trace which permissions each identity inherits through nested group membership. |
+| **NetworkX** | ≥3.2 | Directed graph library for the privilege graph (M3); handles cycles natively via BFS shortest-path traversal, calculates direct and effective privilege tiers, and tracks grant paths. | `graph/` (M3), `evaluation/` (M3) | NetworkX lets us model identities, groups and policies as a graph so we can trace which permissions each identity inherits through nested group membership and federation. |
 | **FastAPI** | ≥0.110 | High-performance async API framework with automatic OpenAPI docs; CORS middleware built in for the React frontend. Alternatives: Flask (synchronous, less modern), Django REST (more opinionated). | `api/` (M4) | FastAPI automatically generates API documentation and handles JSON serialisation while supporting async requests for better performance. |
 | **Uvicorn** | ≥0.27 | ASGI server for FastAPI; `[standard]` extras add `uvloop` for performance. | `api/` (M4) | Uvicorn is the server that runs the FastAPI application and serves HTTP requests. |
 
@@ -56,5 +56,6 @@ which module uses it, and a one-sentence explanation for a guide/examiner.
 
 ---
 
-_Last updated: M2 (2026-10-21)_
+_Last updated: M3 (2026-10-22)_
+
 
