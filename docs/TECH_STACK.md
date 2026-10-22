@@ -30,6 +30,7 @@ which module uses it, and a one-sentence explanation for a guide/examiner.
 | **pytest** ≥8.0 | Standard Python test runner; parametrise, fixtures, and clear failure messages. |
 | **pytest-cov** ≥4.1 | Coverage reporting so we can see which branches are untested. |
 | **ruff** ≥0.3 | Single fast tool replacing flake8 + black + isort; enforced in CI. |
+| **httpx** ≥0.27 | Test-only dependency required by Starlette's `TestClient` (`fastapi.testclient.TestClient`) to execute in-process HTTP requests against the FastAPI application in `tests/test_api.py`. |
 
 ---
 
@@ -56,6 +57,6 @@ which module uses it, and a one-sentence explanation for a guide/examiner.
 
 ---
 
-_Last updated: M3 (2026-10-22)_
+_Last updated: M4 (2026-10-22)_
 
 

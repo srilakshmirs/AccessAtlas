@@ -8,9 +8,12 @@ from accessatlas.evaluation.identity_metrics import (
     EvaluationReport,
     KindMetrics,
     SignalMetrics,
+    count_train_fuzzy_candidates,
     evaluate_identity_resolution,
+    evaluate_resolution_for_split,
     load_gt_identity_data,
     tune_fuzzy_threshold,
+    tune_fuzzy_threshold_pipeline,
 )
 from accessatlas.evaluation.privilege_metrics import (
     EscalationMetrics,
@@ -43,8 +46,10 @@ __all__ = [
     "SplitEvaluationReport",
     "TierAccuracy",
     "TrapMetrics",
+    "count_train_fuzzy_candidates",
     "evaluate_identity_resolution",
     "evaluate_privilege_resolution",
+    "evaluate_resolution_for_split",
     "evaluate_scenario_findings",
     "load_gt_identity_data",
     "load_gt_privilege_data",
@@ -52,4 +57,5 @@ __all__ = [
     "run_full_privilege_evaluation",
     "run_full_scenario_evaluation",
     "tune_fuzzy_threshold",
+    "tune_fuzzy_threshold_pipeline",
 ]

@@ -13,6 +13,7 @@ ingestion:
   fixture_sample_size: 200
 resolution:
   fuzzy_threshold: 70.0
+  ambiguity_margin: 3.0
 privilege:
   # Fallback Okta admin role-to-tier mapping if Tier_Mapping is absent
   okta_roles:

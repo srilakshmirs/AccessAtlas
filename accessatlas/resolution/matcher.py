@@ -181,6 +181,7 @@ def match_account(
     raw_display_name: str | None,
     hr_index: dict[str, Any],
     fuzzy_threshold: float = 85.0,
+    ambiguity_margin: float = 3.0,
 ) -> AccountResolution:
     """Match a single platform account to an HR record using tiered signals.
 
@@ -325,8 +326,8 @@ def match_account(
 
         if best_emp and best_score >= fuzzy_threshold:
             # Check for ambiguous match: multiple employees share the top score
-            # or the top score is not clearly separated from the runner-up (< 3.0 points).
-            if len(candidates_at_best) > 1 or (best_score - second_best_score < 3.0):
+            # or the top score is not clearly separated from the runner-up (< ambiguity_margin points).
+            if len(candidates_at_best) > 1 or (best_score - second_best_score < ambiguity_margin):
                 return AccountResolution(
                     is_resolved=False,
                     platform=platform,

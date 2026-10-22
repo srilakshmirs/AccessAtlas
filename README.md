@@ -130,7 +130,7 @@ docker-compose.yml  Runs backend (and frontend in M4)
 | M1 | `m1-ingestion` → `m1-cleanup` | ✅ Done |
 | M2 | `m2-resolution` | ✅ Done |
 | M3 | `m3-graph` | ✅ Done |
-| M4 | `m4-rules-api` | 🔜 Next |
+| M4 | `m4-rules-api` | ✅ Done |
 
 ---
 

@@ -1,73 +1,19 @@
-"""Integration tests for the AccessAtlas FastAPI application using in-process ASGI client.
+"""Integration tests for the AccessAtlas FastAPI application using FastAPI's TestClient.
 
 Tests /health, /identities, /identities/{id}, /findings, /findings/{id}, and /evaluation.
-Works entirely without adding extra external libraries.
 """
 
 from __future__ import annotations
 
-import asyncio
-import json
 from pathlib import Path
-from typing import Any
 
 import pytest
+from fastapi.testclient import TestClient
 
 from accessatlas.api.main import app, app_state
 from accessatlas.utils import load_config
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
-
-
-class ASGIResponse:
-    """Lightweight response representation matching TestClient interface."""
-
-    def __init__(self, status_code: int, headers: list[tuple[bytes, bytes]], body: bytes) -> None:
-        self.status_code = status_code
-        self.headers = headers
-        self.content = body
-
-    def json(self) -> Any:
-        return json.loads(self.content.decode("utf-8"))
-
-
-class TestClient:
-    """Drop-in ASGI TestClient that calls the FastAPI app in-process."""
-
-    __test__ = False
-
-    def __init__(self, asgi_app: Any) -> None:
-        self.app = asgi_app
-
-    def get(self, path_and_query: str) -> ASGIResponse:
-        path, _, query_string = path_and_query.partition("?")
-        scope = {
-            "type": "http",
-            "asgi": {"version": "3.0"},
-            "http_version": "1.1",
-            "method": "GET",
-            "path": path,
-            "raw_path": path.encode("ascii"),
-            "query_string": query_string.encode("ascii"),
-            "headers": [[b"host", b"testserver"]],
-        }
-
-        status_code = [200]
-        response_headers: list[tuple[bytes, bytes]] = []
-        response_body: list[bytes] = []
-
-        async def receive() -> dict[str, Any]:
-            return {"type": "http.request", "body": b"", "more_body": False}
-
-        async def send(message: dict[str, Any]) -> None:
-            if message["type"] == "http.response.start":
-                status_code[0] = message["status"]
-                response_headers.extend(message.get("headers", []))
-            elif message["type"] == "http.response.body":
-                response_body.append(message.get("body", b""))
-
-        asyncio.run(self.app(scope, receive, send))
-        return ASGIResponse(status_code[0], response_headers, b"".join(response_body))
 
 
 @pytest.fixture(scope="session")
