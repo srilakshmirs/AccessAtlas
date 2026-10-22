@@ -1,14 +1,16 @@
 """Tests for M4 scenario metrics evaluation."""
+
 from pathlib import Path
 
-import pytest
 import pandas as pd
+import pytest
 
 from accessatlas.evaluation.scenario_metrics import (
     evaluate_scenario_findings,
     load_gt_scenario_data,
 )
 from accessatlas.rules.models import Finding
+
 
 @pytest.mark.skipif(
     not Path("data/processed/gt").exists(),
