@@ -13,6 +13,7 @@ ingestion:
   fixture_sample_size: 200
 resolution:
   fuzzy_threshold: 70.0
+  ambiguity_margin: 3.0
 privilege:
   # Fallback Okta admin role-to-tier mapping if Tier_Mapping is absent
   okta_roles:
@@ -21,3 +22,13 @@ privilege:
     APP_ADMIN: 2
     HELP_DESK_ADMIN: 2
     READ_ONLY_ADMIN: 3
+snapshot_date: "2026-10-12"
+rules:
+  # Inactivity threshold for privileged identities (tier <= 1)
+  dormant_admin_days: 60
+  # API token rotation and usage limits
+  token_rotation_days: 365
+  token_inactivity_days: 90
+  # Context suppression thresholds
+  new_hire_days: 30
+  recent_role_change_days: 30

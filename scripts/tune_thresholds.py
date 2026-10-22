@@ -19,9 +19,9 @@ import pandas as pd
 import yaml
 
 from accessatlas.evaluation import (
-    evaluate_identity_resolution,
-    load_gt_identity_data,
-    tune_fuzzy_threshold,
+    count_train_fuzzy_candidates,
+    evaluate_resolution_for_split,
+    tune_fuzzy_threshold_pipeline,
 )
 from accessatlas.resolution.resolver import resolve_identities
 from accessatlas.utils import load_config, setup_logging
@@ -45,10 +45,6 @@ def main() -> None:
         "Okta_Users": okta_df,
     }
 
-    print("Loading ground truth tables via accessatlas.evaluation...")
-    gt_dir = proc_dir / "gt"
-    gt_links, gt_labels = load_gt_identity_data(gt_dir)
-
     # --- Part 1: Report train accounts by signal and fuzzy stage count ---
     print("\n" + "=" * 70)
     print("PART 1: TRAIN SPLIT ACCOUNT SIGNALS & FUZZY STAGE READINESS")
@@ -56,9 +52,7 @@ def main() -> None:
 
     # Initial resolution with baseline to inspect signal counts on train
     baseline_res = resolve_identities(hr_df, ad_df, aws_df, okta_df, fuzzy_threshold=85.0)
-    train_eval = evaluate_identity_resolution(
-        baseline_res, gt_links, gt_labels, split="train", core_tables=core_tables
-    )
+    train_eval = evaluate_resolution_for_split(baseline_res, split="train", core_tables=core_tables)
 
     print(f"Total train GT identities: {train_eval.total_gt_identities}")
     print(f"Total train GT platform accounts: {train_eval.total_gt_accounts}")
@@ -69,16 +63,8 @@ def main() -> None:
             f"(TP: {sig_m.tp:5}, FP: {sig_m.fp:5}, Precision: {sig_m.precision:.4f})"
         )
 
-    # Accounts reaching fuzzy stage in train (AWS human with no tags)
-    aws_train_gt = gt_links.merge(gt_labels[["identity_id", "split"]], on="identity_id", how="left")
-    aws_train_ids = set(aws_train_gt[aws_train_gt["split"] == "train"]["aws_user_id"].dropna())
-    aws_train_human_no_tags = aws_df[
-        aws_df["user_id"].isin(aws_train_ids)
-        & (aws_df["account_type"] == "human")
-        & aws_df["tag_employee_id"].isna()
-        & aws_df["tag_email"].isna()
-    ]
-    fuzzy_candidates_count = len(aws_train_human_no_tags)
+    # Accounts reaching fuzzy stage in train (evaluated via evaluation module)
+    fuzzy_candidates_count = count_train_fuzzy_candidates(aws_df)
     print(
         f"\nAccounts reaching the fuzzy matching stage on train: {fuzzy_candidates_count} accounts"
     )
@@ -97,13 +83,11 @@ def main() -> None:
     print("=" * 70)
 
     thresholds_to_test = [70.0, 75.0, 78.0, 80.0, 82.0, 84.0, 85.0, 86.0, 88.0, 90.0, 92.0, 95.0]
-    sweep_df, best_t, error_analysis = tune_fuzzy_threshold(
+    sweep_df, best_t, error_analysis = tune_fuzzy_threshold_pipeline(
         hr_df=hr_df,
         ad_df=ad_df,
         aws_df=aws_df,
         okta_df=okta_df,
-        gt_links=gt_links,
-        gt_labels=gt_labels,
         thresholds=thresholds_to_test,
     )
 
@@ -146,9 +130,7 @@ def main() -> None:
 
     for split_name in ["train", "test", "holdout"]:
         print(f"\n--- Split: {split_name.upper()} ---")
-        rep = evaluate_identity_resolution(
-            final_res, gt_links, gt_labels, split=split_name, core_tables=core_tables
-        )
+        rep = evaluate_resolution_for_split(final_res, split=split_name, core_tables=core_tables)
         print(
             f"Overall Precision : {rep.overall_precision:.4f}  |  "
             f"Overall Recall : {rep.overall_recall:.4f}  |  "

@@ -73,16 +73,34 @@ python scripts/tune_thresholds.py
 python scripts/evaluate_privilege.py
 ```
 
-### 7. Run the API (M4+)
+### 7. Run the API (M4)
+
+Start the local API development server with Uvicorn:
 
 ```bash
 uvicorn accessatlas.api.main:app --reload
 ```
 
-Or with Docker:
+Example requests:
 
 ```bash
-docker-compose up --build
+# System health and findings count:
+curl http://localhost:8000/health
+
+# List identities (paginated, with optional tier / kind filters):
+curl "http://localhost:8000/identities?page=1&size=20&max_tier=1"
+
+# Inspect a single identity with platform accounts, grant paths, and findings:
+curl http://localhost:8000/identities/E100086
+
+# List explainable security findings (filtered by rule, platform, severity):
+curl "http://localhost:8000/findings?severity=high&rule=offboarding_gap"
+
+# Retrieve full evidence and remediation advice for a single finding:
+curl http://localhost:8000/findings/FND-offboarding_gap-E100086
+
+# Retrieve scenario-level evaluation metrics:
+curl "http://localhost:8000/evaluation?split=train"
 ```
 
 ---
@@ -112,7 +130,7 @@ docker-compose.yml  Runs backend (and frontend in M4)
 | M1 | `m1-ingestion` → `m1-cleanup` | ✅ Done |
 | M2 | `m2-resolution` | ✅ Done |
 | M3 | `m3-graph` | ✅ Done |
-| M4 | `m4-rules-api` | 🔜 Next |
+| M4 | `m4-rules-api` | ✅ Done |
 
 ---
 

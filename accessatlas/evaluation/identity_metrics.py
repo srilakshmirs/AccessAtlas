@@ -542,3 +542,54 @@ def tune_fuzzy_threshold(
 
     sweep_df = pd.DataFrame(sweep_records)
     return sweep_df, best_threshold, train_error_analysis
+
+
+def count_train_fuzzy_candidates(aws_df: pd.DataFrame, gt_dir: Path | None = None) -> int:
+    """Count how many AWS human accounts reach the fuzzy matching stage on train."""
+    g_dir = gt_dir or Path("data/processed/gt")
+    gt_links, gt_labels = load_gt_identity_data(g_dir)
+    aws_train_gt = gt_links.merge(gt_labels[["identity_id", "split"]], on="identity_id", how="left")
+    aws_train_ids = set(aws_train_gt[aws_train_gt["split"] == "train"]["aws_user_id"].dropna())
+    aws_train_human_no_tags = aws_df[
+        aws_df["user_id"].isin(aws_train_ids)
+        & (aws_df["account_type"] == "human")
+        & aws_df["tag_employee_id"].isna()
+        & aws_df["tag_email"].isna()
+    ]
+    return len(aws_train_human_no_tags)
+
+
+def evaluate_resolution_for_split(
+    res: ResolutionResult,
+    split: str,
+    core_tables: dict[str, pd.DataFrame] | None = None,
+    gt_dir: Path | None = None,
+) -> EvaluationReport:
+    """Evaluate resolution result for a specific split using GT data directly inside evaluation package."""
+    g_dir = gt_dir or Path("data/processed/gt")
+    gt_links, gt_labels = load_gt_identity_data(g_dir)
+    return evaluate_identity_resolution(
+        res, gt_links, gt_labels, split=split, core_tables=core_tables
+    )
+
+
+def tune_fuzzy_threshold_pipeline(
+    hr_df: pd.DataFrame,
+    ad_df: pd.DataFrame,
+    aws_df: pd.DataFrame,
+    okta_df: pd.DataFrame,
+    thresholds: list[float] | None = None,
+    gt_dir: Path | None = None,
+) -> tuple[pd.DataFrame, float, dict[str, Any]]:
+    """Tune fuzzy threshold across train identities using GT data directly inside evaluation package."""
+    g_dir = gt_dir or Path("data/processed/gt")
+    gt_links, gt_labels = load_gt_identity_data(g_dir)
+    return tune_fuzzy_threshold(
+        hr_df=hr_df,
+        ad_df=ad_df,
+        aws_df=aws_df,
+        okta_df=okta_df,
+        gt_links=gt_links,
+        gt_labels=gt_labels,
+        thresholds=thresholds,
+    )

@@ -114,11 +114,14 @@ def resolve_identities(
         Contains resolved_identities DataFrame, unresolved_accounts DataFrame,
         and execution summary.
     """
-    if fuzzy_threshold is None:
-        try:
-            cfg = load_config(config_path)
+    ambiguity_margin = 3.0
+    try:
+        cfg = load_config(config_path)
+        if fuzzy_threshold is None:
             fuzzy_threshold = float(cfg.get("resolution", {}).get("fuzzy_threshold", 85.0))
-        except Exception:
+        ambiguity_margin = float(cfg.get("resolution", {}).get("ambiguity_margin", 3.0))
+    except Exception:
+        if fuzzy_threshold is None:
             fuzzy_threshold = 85.0
 
     hr_index = build_hr_index(hr_df)
@@ -204,6 +207,7 @@ def resolve_identities(
                 raw_display_name=fields["raw_display_name"],
                 hr_index=hr_index,
                 fuzzy_threshold=fuzzy_threshold,
+                ambiguity_margin=ambiguity_margin,
             )
 
             if not res.is_resolved:
