@@ -13,3 +13,11 @@ ingestion:
   fixture_sample_size: 200
 resolution:
   fuzzy_threshold: 70.0
+privilege:
+  # Fallback Okta admin role-to-tier mapping if Tier_Mapping is absent
+  okta_roles:
+    SUPER_ADMIN: 0
+    ORG_ADMIN: 1
+    APP_ADMIN: 2
+    HELP_DESK_ADMIN: 2
+    READ_ONLY_ADMIN: 3
