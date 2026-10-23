@@ -339,3 +339,119 @@ def test_ml_pipeline_with_fixtures():
         assert f.rule == "behavioural_anomaly"
         assert f.severity == "medium"
         assert any("z-score=" in line for line in f.evidence)
+
+
+def test_behavioral_anomaly_trap_suppression():
+    """Verify that SuppressionEngine suppresses behavioural_anomaly findings for legitimate contexts."""
+    snapshot_date = pd.Timestamp("2026-10-12 23:59:59")
+
+    # Exceptions
+    exc_df = pd.DataFrame(
+        [
+            {
+                "exception_id": "EXC-001",
+                "employee_id": "E10001",
+                "status": "active",
+                "start_date": "2026-10-01",
+                "end_date": "2026-10-20",
+                "reason": "Authorized penetration testing",
+            }
+        ]
+    )
+
+    # OnCall
+    oncall_df = pd.DataFrame(
+        [
+            {
+                "employee_id": "E10002",
+                "shift_start": "2026-10-08",
+                "shift_end": "2026-10-15",
+            }
+        ]
+    )
+
+    # Scheduled Jobs
+    jobs_df = pd.DataFrame(
+        [
+            {
+                "service_account_id": "SVC-0001",
+                "job_name": "backup-sync",
+                "owner_employee_id": "E10003",
+            }
+        ]
+    )
+
+    # Recent Hire
+    hr_df = pd.DataFrame(
+        [
+            {
+                "employee_id": "E10004",
+                "hire_date": "2026-10-01",  # 11 days ago <= 30
+            }
+        ]
+    )
+
+    # Tokens mapping
+    tokens_df = pd.DataFrame(
+        [
+            {
+                "account_id": "AWS-USR-001",
+                "identity_id": "SVC-0001",
+            }
+        ]
+    )
+
+    from accessatlas.rules.suppression import SuppressionEngine
+
+    engine = SuppressionEngine(
+        snapshot_date=snapshot_date,
+        exceptions_df=exc_df,
+        oncall_df=oncall_df,
+        scheduled_jobs_df=jobs_df,
+        hr_df=hr_df,
+        tokens_df=tokens_df,
+    )
+
+    # 1. Exception identity suppressed
+    is_supp, reason = engine.check_suppression("behavioural_anomaly", "E10001")
+    assert is_supp
+    assert "approved exception" in str(reason).lower()
+
+    # 2. Oncall identity suppressed
+    is_supp, reason = engine.check_suppression("behavioural_anomaly", "E10002")
+    assert is_supp
+    assert "on-call" in str(reason).lower()
+
+    # 3. Scheduled job service account suppressed
+    is_supp, reason = engine.check_suppression(
+        "behavioural_anomaly", "svc:aws:AWS-USR-001", account_id="AWS-USR-001"
+    )
+    assert is_supp
+    assert "backup-sync" in str(reason).lower()
+
+    # 4. Recent hire suppressed
+    is_supp, reason = engine.check_suppression("behavioural_anomaly", "E10004")
+    assert is_supp
+    assert "recent hire" in str(reason).lower()
+
+    # 5. Non-legitimate identity NOT suppressed
+    is_supp, reason = engine.check_suppression("behavioural_anomaly", "E99999")
+    assert not is_supp
+    assert reason is None
+
+
+@pytest.mark.skipif(
+    not Path("data/processed/gt/GT_Labels.parquet").exists(),
+    reason="Full GT data is not available in CI (data/ is gitignored)",
+)
+def test_evaluate_ml_pipeline_train():
+    """Verify evaluate_ml_pipeline on train split runs cleanly and produces structured report."""
+    from accessatlas.evaluation.ml_metrics import evaluate_ml_pipeline
+
+    report = evaluate_ml_pipeline(split="train")
+    assert report.split == "train"
+    assert report.total_identities > 0
+    assert len(report.target_scenarios) == 3
+    assert report.normal_row is not None
+    assert len(report.traps) == 5
+    assert len(report.honesty_notes) >= 3

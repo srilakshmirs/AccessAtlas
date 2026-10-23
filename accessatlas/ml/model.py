@@ -180,11 +180,13 @@ class BehavioralAnomalyDetector:
         peer_medians: dict[str, dict[str, float]],
         peer_stds: dict[str, dict[str, float]],
         resolved_identities: pd.DataFrame | None = None,
+        suppression_engine: Any | None = None,
     ) -> list[Finding]:
         """Convert detected anomalies into structured explainable Finding objects.
 
         For each anomalous identity, extracts the top 3 deviating features relative
         to the unlabelled peer baseline (value, peer median, and z-score).
+        Optionally filters out anomalies suppressed by legitimate administrative context.
 
         Parameters
         ----------
@@ -196,6 +198,8 @@ class BehavioralAnomalyDetector:
             Peer group standard deviations per feature.
         resolved_identities : pd.DataFrame, optional
             Resolved identities table to populate platform associations.
+        suppression_engine : SuppressionEngine, optional
+            Context suppression engine to filter legitimate administrative activity.
 
         Returns
         -------
@@ -284,6 +288,17 @@ class BehavioralAnomalyDetector:
             plats = plat_map.get(iid, ["ad" if ikind == "human" else "aws"])
             if not plats:
                 plats = ["ad"]
+
+            if suppression_engine is not None:
+                is_supp, reason = suppression_engine.check_suppression(
+                    rule="behavioural_anomaly",
+                    identity_id=iid,
+                    platforms=plats,
+                    account_id=None,
+                )
+                if is_supp:
+                    logger.debug("Suppressed behavioural anomaly for %s: %s", iid, reason)
+                    continue
 
             fnd = Finding(
                 finding_id=f"FND-behavioural_anomaly-{iid}",

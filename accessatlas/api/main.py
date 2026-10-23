@@ -23,9 +23,11 @@ from accessatlas.api.schemas import (
 )
 from accessatlas.graph import build_privilege_graph, compute_identity_privileges
 from accessatlas.ingestion.loader import load_table
+from accessatlas.ml import BehavioralAnomalyDetector, extract_behavioral_features
 from accessatlas.resolution import resolve_identities
 from accessatlas.rules.detectors import evaluate_all_rules
 from accessatlas.rules.models import Finding
+from accessatlas.rules.suppression import SuppressionEngine
 from accessatlas.utils import load_config
 
 logger = logging.getLogger(__name__)
@@ -124,6 +126,49 @@ class AppState:
             tokens_df=tokens,
             config=cfg,
         )
+
+        # 5. Behavioral Anomaly Detection (M5 ML)
+        try:
+            ad_mem = load_table("AD_GroupMembership", config=cfg, fixture_dir=fixture_dir)
+            aws_ug = load_table("AWS_UserGroups", config=cfg, fixture_dir=fixture_dir)
+            okta_mem = load_table("Okta_GroupMembership", config=cfg, fixture_dir=fixture_dir)
+            feat_df, peer_med, peer_std = extract_behavioral_features(
+                audit_events_df=audit,
+                resolved_identities=self.resolved_df,
+                privilege_df=self.privilege_df,
+                snapshot_date=self.snapshot_date,
+                tokens_df=tokens,
+                role_changes_df=role_changes,
+                ad_membership_df=ad_mem,
+                aws_user_groups_df=aws_ug,
+                okta_group_membership_df=okta_mem,
+                hr_records_df=hr,
+            )
+            detector = BehavioralAnomalyDetector()
+            detector.fit(feat_df)
+            scored_df = detector.score(feat_df)
+            supp_engine = SuppressionEngine(
+                snapshot_date=self.snapshot_date,
+                exceptions_df=exc,
+                oncall_df=oncall,
+                scheduled_jobs_df=jobs,
+                hr_df=hr,
+                role_changes_df=role_changes,
+                tokens_df=tokens,
+            )
+            ml_findings = detector.generate_findings(
+                scored_df=scored_df,
+                peer_medians=peer_med,
+                peer_stds=peer_std,
+                resolved_identities=self.resolved_df,
+                suppression_engine=supp_engine,
+            )
+            self.findings.extend(ml_findings)
+        except Exception as ml_exc:
+            logger.warning(
+                "ML feature extraction / anomaly detection could not be initialized: %s",
+                ml_exc,
+            )
 
         # Index findings by id and by identity_id
         self.findings_by_id = {f.finding_id: f for f in self.findings}
@@ -425,6 +470,59 @@ def get_evaluation(
         for k, v in report.traps.items()
     }
 
+    # Compute ML comparison benchmarks
+    ml_comp_dict: dict[str, Any] | None = None
+    try:
+        from accessatlas.evaluation.ml_metrics import evaluate_ml_pipeline
+
+        ml_report = evaluate_ml_pipeline(split=split, config=app_state.config)
+        ml_comp_dict = {
+            "target_scenarios": [
+                {
+                    "scenario": s.scenario,
+                    "total_in_split": s.total_in_split,
+                    "rules_tp": s.rules_tp,
+                    "rules_precision": s.rules_precision,
+                    "rules_recall": s.rules_recall,
+                    "ml_tp": s.ml_tp,
+                    "ml_precision": s.ml_precision,
+                    "ml_recall": s.ml_recall,
+                    "combined_tp": s.combined_tp,
+                    "combined_precision": s.combined_precision,
+                    "combined_recall": s.combined_recall,
+                    "notes": s.notes,
+                }
+                for s in ml_report.target_scenarios
+            ],
+            "normal": {
+                "total": ml_report.normal_row.total_normals,
+                "rules_flagged": ml_report.normal_row.rules_flagged,
+                "rules_far": ml_report.normal_row.rules_far,
+                "ml_flagged": ml_report.normal_row.ml_flagged,
+                "ml_far": ml_report.normal_row.ml_far,
+                "combined_flagged": ml_report.normal_row.combined_flagged,
+                "combined_far": ml_report.normal_row.combined_far,
+            }
+            if ml_report.normal_row
+            else None,
+            "traps": [
+                {
+                    "scenario": t.scenario,
+                    "total": t.total_traps,
+                    "rules_flagged": t.rules_flagged,
+                    "rules_far": t.rules_far,
+                    "ml_flagged": t.ml_flagged,
+                    "ml_far": t.ml_far,
+                    "combined_flagged": t.combined_flagged,
+                    "combined_far": t.combined_far,
+                }
+                for t in ml_report.traps
+            ],
+            "honesty_notes": ml_report.honesty_notes,
+        }
+    except Exception as ml_err:
+        logger.warning("Could not compute ML comparison metrics for %s: %s", split, ml_err)
+
     return EvaluationResponse(
         split=report.split,
         total_identities=report.total_identities,
@@ -433,4 +531,5 @@ def get_evaluation(
         findings_by_severity=report.findings_by_severity,
         scenarios=scenario_items,
         traps=trap_items,
+        ml_comparison=ml_comp_dict,
     )

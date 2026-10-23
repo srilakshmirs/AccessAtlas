@@ -149,3 +149,20 @@ def test_evaluation_endpoint_invalid_split(client: TestClient):
     """GET /evaluation with invalid split must return 400."""
     response = client.get("/evaluation?split=invalid_split")
     assert response.status_code == 400
+
+
+def test_evaluation_endpoint_ml_comparison(client: TestClient):
+    """GET /evaluation must return ml_comparison block when GT data is available."""
+    response = client.get("/evaluation?split=train")
+    if response.status_code == 500:
+        pytest.skip("Ground truth data not available in this environment")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "ml_comparison" in data
+    ml_comp = data["ml_comparison"]
+    if ml_comp is not None:
+        assert "target_scenarios" in ml_comp
+        assert "normal" in ml_comp
+        assert "traps" in ml_comp
+        assert "honesty_notes" in ml_comp

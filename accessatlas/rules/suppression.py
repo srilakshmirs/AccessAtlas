@@ -47,6 +47,7 @@ class SuppressionEngine:
         scheduled_jobs_df: pd.DataFrame | None = None,
         hr_df: pd.DataFrame | None = None,
         role_changes_df: pd.DataFrame | None = None,
+        tokens_df: pd.DataFrame | None = None,
         new_hire_days: int = 30,
         role_change_days: int = 30,
     ) -> None:
@@ -58,8 +59,18 @@ class SuppressionEngine:
         )
         self.hr_df = hr_df if hr_df is not None else pd.DataFrame()
         self.role_changes_df = role_changes_df if role_changes_df is not None else pd.DataFrame()
+        self.tokens_df = tokens_df if tokens_df is not None else pd.DataFrame()
         self.new_hire_days = new_hire_days
         self.role_change_days = role_change_days
+
+        # Pre-index tokens mapping account_id -> identity_id
+        self._token_account_to_svc: dict[str, str] = {}
+        if not self.tokens_df.empty:
+            for _, t_row in self.tokens_df.iterrows():
+                acc = t_row.get("account_id")
+                svc = t_row.get("identity_id")
+                if pd.notna(acc) and pd.notna(svc):
+                    self._token_account_to_svc[str(acc)] = str(svc)
 
         # Pre-index active exceptions for fast lookup
         self._active_exceptions_by_emp: dict[str, list[dict[str, Any]]] = {}
@@ -176,6 +187,55 @@ class SuppressionEngine:
 
         # 5. Role Change
         if rule in ("cross_platform_admin", "nested_group_escalation"):
+            if identity_id in self._recent_role_change_emps:
+                return (
+                    True,
+                    f"Suppressed by recent HR role change within {self.role_change_days} days",
+                )
+
+        # 6. Behavioural Anomaly: suppress known legitimate administrative context
+        if rule == "behavioural_anomaly":
+            # Active exception
+            if identity_id in self._active_exceptions_by_emp:
+                exc = self._active_exceptions_by_emp[identity_id][0]
+                return (
+                    True,
+                    f"Suppressed by active approved exception {exc.get('exception_id')}: {exc.get('reason', 'approved activity')}",
+                )
+
+            # Active on-call shift
+            if identity_id in self._active_oncall_emps:
+                return (
+                    True,
+                    f"Suppressed by active on-call shift covering snapshot date {self.snapshot_date.date()}",
+                )
+
+            # Scheduled job (service account or owner)
+            raw_acc = identity_id.split(":")[-1] if ":" in identity_id else identity_id
+            svc_id = self._token_account_to_svc.get(raw_acc, raw_acc)
+            if account_id and account_id in self._token_account_to_svc:
+                svc_id = self._token_account_to_svc[account_id]
+
+            if not self.scheduled_jobs_df.empty:
+                job_matches = self.scheduled_jobs_df[
+                    (self.scheduled_jobs_df["service_account_id"] == svc_id)
+                    | (self.scheduled_jobs_df["service_account_id"] == identity_id)
+                    | (self.scheduled_jobs_df["service_account_id"] == account_id)
+                    | (self.scheduled_jobs_df["service_account_id"] == raw_acc)
+                    | (self.scheduled_jobs_df["owner_employee_id"] == identity_id)
+                ]
+                if not job_matches.empty:
+                    job_name = job_matches.iloc[0]["job_name"]
+                    return True, f"Suppressed by registered scheduled job '{job_name}'"
+
+            # Recent hire
+            if identity_id in self._recent_hires:
+                return (
+                    True,
+                    f"Suppressed by recent hire status (hired within {self.new_hire_days} days)",
+                )
+
+            # Recent role change
             if identity_id in self._recent_role_change_emps:
                 return (
                     True,

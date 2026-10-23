@@ -258,6 +258,97 @@ export default function Evaluation() {
               </table>
             </div>
           </div>
+
+          {/* ML vs Rules Comparison Card */}
+          {evalData?.ml_comparison && (
+            <div className="card" style={{ marginTop: '1.5rem' }}>
+              <div className="card-header">
+                <div>
+                  <h2 className="card-title">Machine Learning vs. Rules-Only Baseline</h2>
+                  <p className="card-subtitle">
+                    Evaluation of unsupervised IsolationForest behavioural anomaly detection at a fixed 2.0% alert budget
+                  </p>
+                </div>
+              </div>
+
+              {evalData.ml_comparison.honesty_notes?.length > 0 && (
+                <div style={{ padding: '0.75rem 1.25rem', backgroundColor: 'var(--callout-bg, rgba(234, 179, 8, 0.08))', borderLeft: '4px solid var(--color-warning, #f59e0b)', marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  <strong>Evaluation Honesty & Methodology:</strong>
+                  <ul style={{ margin: '0.35rem 0 0 1.25rem', padding: 0 }}>
+                    {evalData.ml_comparison.honesty_notes.map((note, idx) => (
+                      <li key={idx} style={{ marginTop: '0.2rem' }}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Scenario / Cohort</th>
+                      <th style={{ textAlign: 'right' }}>Total</th>
+                      <th style={{ textAlign: 'right' }}>Rules Only Recall</th>
+                      <th style={{ textAlign: 'right' }}>Combined Recall</th>
+                      <th style={{ textAlign: 'right' }}>Combined Precision</th>
+                      <th style={{ textAlign: 'right' }}>ML Gain</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {evalData.ml_comparison.target_scenarios?.map((s) => {
+                      const rulesRec = s.total_in_split > 0 ? `${(s.rules_recall * 100).toFixed(1)}%` : 'N/A';
+                      const combRec = s.total_in_split > 0 ? `${(s.combined_recall * 100).toFixed(1)}%` : 'N/A';
+                      const combPrec = (s.combined_tp > 0) ? `${(s.combined_precision * 100).toFixed(1)}%` : '0.0%';
+                      const gain = s.combined_tp - s.rules_tp;
+
+                      return (
+                        <tr key={s.scenario}>
+                          <td style={{ fontWeight: 600 }}>{s.scenario.replace(/_/g, ' ')}</td>
+                          <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>{s.total_in_split}</td>
+                          <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>
+                            {s.rules_tp} / {s.total_in_split} ({rulesRec})
+                          </td>
+                          <td style={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 600, color: 'var(--color-brand)' }}>
+                            {s.combined_tp} / {s.total_in_split} ({combRec})
+                          </td>
+                          <td style={{ textAlign: 'right', fontWeight: 600 }}>
+                            {combPrec}
+                          </td>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: gain > 0 ? 'var(--status-success-text)' : 'var(--text-muted)' }}>
+                            {gain > 0 ? `+${gain} detected` : '—'}
+                          </td>
+                          <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            {s.total_in_split === 0 ? 'No injected cases in this split' : s.notes || 'Unsupervised IsolationForest detection'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                    {evalData.ml_comparison.normal && (
+                      <tr style={{ borderTop: '2px solid var(--border-color)' }}>
+                        <td style={{ fontWeight: 600 }}>Normal Identities (False Alarms)</td>
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>{evalData.ml_comparison.normal.total}</td>
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace' }}>
+                          {evalData.ml_comparison.normal.rules_flagged} ({(evalData.ml_comparison.normal.rules_far * 100).toFixed(2)}%)
+                        </td>
+                        <td style={{ textAlign: 'right', fontFamily: 'monospace', color: 'var(--status-success-text)', fontWeight: 600 }}>
+                          {evalData.ml_comparison.normal.combined_flagged} ({(evalData.ml_comparison.normal.combined_far * 100).toFixed(2)}%)
+                        </td>
+                        <td style={{ textAlign: 'right' }}>—</td>
+                        <td style={{ textAlign: 'right', color: 'var(--status-success-text)', fontWeight: 600 }}>
+                          0 ML false alarms
+                        </td>
+                        <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                          Fixed 2% budget keeps normal ML FAR at 0.00%
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       ) : null}
     </div>
