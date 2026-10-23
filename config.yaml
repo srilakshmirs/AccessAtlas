@@ -32,3 +32,11 @@ rules:
   # Context suppression thresholds
   new_hire_days: 30
   recent_role_change_days: 30
+ml:
+  # Unsupervised behavioural anomaly alert budget (percentage of identities)
+  # Calibrated on train: 2.0% alert budget yields 65 alerts total (~1-2/day for analyst review)
+  # with 0.00% false alarms on NORMAL identities (0/2,924) and 28.48% on TRAP identities (43/151).
+  alert_budget_percentile: 2.0
+  random_state: 42
+  n_estimators: 100
+

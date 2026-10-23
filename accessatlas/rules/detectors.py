@@ -643,6 +643,7 @@ def evaluate_all_rules(
         scheduled_jobs_df=scheduled_jobs_df,
         hr_df=hr_df,
         role_changes_df=role_changes_df,
+        tokens_df=tokens_df,
         new_hire_days=new_hire_days,
         role_change_days=role_change_days,
     )

@@ -7,6 +7,7 @@ import { SeverityBadge } from '../components/Badges';
 
 const ALL_RULES = [
   { value: '', label: 'All Rules' },
+  { value: 'behavioural_anomaly', label: 'Behavioural Anomaly (ML)' },
   { value: 'unlinked_account_review', label: 'Unlinked Account Review' },
   { value: 'orphaned_account', label: 'Orphaned Account' },
   { value: 'dormant_admin', label: 'Dormant Admin' },

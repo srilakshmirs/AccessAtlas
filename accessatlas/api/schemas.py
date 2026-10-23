@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -89,3 +89,4 @@ class EvaluationResponse(BaseModel):
     findings_by_severity: dict[str, int]
     scenarios: dict[str, ScenarioMetricItem]
     traps: dict[str, TrapMetricItem]
+    ml_comparison: dict[str, Any] | None = None
