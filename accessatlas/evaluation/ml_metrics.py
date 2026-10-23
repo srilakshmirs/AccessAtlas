@@ -116,6 +116,13 @@ class MLEvaluationReport:
     normal_row: NormalComparisonRow | None = None
     traps: list[TrapComparisonRow] = field(default_factory=list)
     honesty_notes: list[str] = field(default_factory=lambda: list(HONESTY_NOTES))
+    ml_alerts_after_suppression: int = 0
+    ml_real_anomalies_flagged: int = 0
+    ml_normal_flagged: int = 0
+    ml_trap_flagged: int = 0
+    ml_precision: float = 0.0
+    ml_real_anomalies_suppressed: int = 0
+    ml_suppressed_identities: list[str] = field(default_factory=list)
 
     def print_report(self) -> None:
         """Print formatted terminal tables comparing rules vs ML."""
@@ -125,6 +132,18 @@ class MLEvaluationReport:
             f"Alert Budget: {self.alert_budget_percentile}% | Total Identities: {self.total_identities}"
         )
         print("=" * 90)
+
+        print("\n[ML-Only Precision & Suppression Impact]")
+        print(
+            f"Total Alerts: {self.ml_alerts_after_suppression} | "
+            f"Real Anomaly Identities: {self.ml_real_anomalies_flagged} | "
+            f"Normal: {self.ml_normal_flagged} | "
+            f"Traps: {self.ml_trap_flagged} | "
+            f"ML-Only Precision: {self.ml_precision * 100:.2f}%"
+        )
+        print(f"Real anomalies removed by suppression: {self.ml_real_anomalies_suppressed}")
+        if self.ml_suppressed_identities:
+            print(f"Suppressed real anomaly IDs: {', '.join(self.ml_suppressed_identities)}")
 
         print("\n[Target Behavioral Scenarios: Precision & Recall]")
         headers = (
@@ -353,6 +372,14 @@ def evaluate_ml_pipeline(
         suppression_engine=supp_engine,
     )
 
+    ml_findings_unsuppressed = detector.generate_findings(
+        scored_df=scored_df,
+        peer_medians=peer_med,
+        peer_stds=peer_std,
+        resolved_identities=resolved_df,
+        suppression_engine=None,
+    )
+
     # Map finding identities to GT IDs
     def _to_gt(f: Finding) -> str:
         iid = f.identity_id
@@ -373,7 +400,26 @@ def evaluate_ml_pipeline(
 
     rules_flagged = set(_to_gt(f) for f in rules_findings if _to_gt(f) in target_ids)
     ml_flagged = set(_to_gt(f) for f in ml_findings if _to_gt(f) in target_ids)
+    ml_unsupp_flagged = set(_to_gt(f) for f in ml_findings_unsuppressed if _to_gt(f) in target_ids)
     comb_flagged = rules_flagged.union(ml_flagged)
+
+    real_mask = ~target_labels["scenario"].isin(["normal"] + TRAP_SCENARIOS)
+    real_ids = set(target_labels[real_mask]["identity_id"].astype(str))
+    norm_ids = set(target_labels[target_labels["scenario"] == "normal"]["identity_id"].astype(str))
+    trap_ids = set(
+        target_labels[target_labels["scenario"].isin(TRAP_SCENARIOS)]["identity_id"].astype(str)
+    )
+
+    ml_alerts = len(ml_flagged)
+    ml_real = len(ml_flagged.intersection(real_ids))
+    ml_norm = len(ml_flagged.intersection(norm_ids))
+    ml_trap = len(ml_flagged.intersection(trap_ids))
+    ml_prec = ml_real / ml_alerts if ml_alerts > 0 else 0.0
+
+    real_unsupp = ml_unsupp_flagged.intersection(real_ids)
+    real_supp = real_unsupp - ml_flagged
+    real_supp_count = len(real_supp)
+    real_supp_ids = sorted(list(real_supp))
 
     # Target ML Scenarios
     scenario_rows: list[ScenarioComparisonRow] = []
@@ -473,4 +519,11 @@ def evaluate_ml_pipeline(
         target_scenarios=scenario_rows,
         normal_row=norm_row,
         traps=trap_rows,
+        ml_alerts_after_suppression=ml_alerts,
+        ml_real_anomalies_flagged=ml_real,
+        ml_normal_flagged=ml_norm,
+        ml_trap_flagged=ml_trap,
+        ml_precision=ml_prec,
+        ml_real_anomalies_suppressed=real_supp_count,
+        ml_suppressed_identities=real_supp_ids,
     )

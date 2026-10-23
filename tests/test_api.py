@@ -134,10 +134,10 @@ def test_get_finding_by_id_not_found(client: TestClient):
 
 def test_evaluation_endpoint(client: TestClient):
     """GET /evaluation must return scenario metrics for valid split."""
-    response = client.get("/evaluation?split=train")
-    if response.status_code == 500:
+    if not Path("data/processed/gt").exists():
         pytest.skip("Ground truth data not available in this environment")
 
+    response = client.get("/evaluation?split=train")
     assert response.status_code == 200
     data = response.json()
     assert data["split"] == "train"
@@ -153,16 +153,16 @@ def test_evaluation_endpoint_invalid_split(client: TestClient):
 
 def test_evaluation_endpoint_ml_comparison(client: TestClient):
     """GET /evaluation must return ml_comparison block when GT data is available."""
-    response = client.get("/evaluation?split=train")
-    if response.status_code == 500:
+    if not Path("data/processed/gt").exists():
         pytest.skip("Ground truth data not available in this environment")
 
+    response = client.get("/evaluation?split=train")
     assert response.status_code == 200
     data = response.json()
     assert "ml_comparison" in data
     ml_comp = data["ml_comparison"]
-    if ml_comp is not None:
-        assert "target_scenarios" in ml_comp
-        assert "normal" in ml_comp
-        assert "traps" in ml_comp
-        assert "honesty_notes" in ml_comp
+    assert ml_comp is not None
+    assert "target_scenarios" in ml_comp
+    assert "normal" in ml_comp
+    assert "traps" in ml_comp
+    assert "honesty_notes" in ml_comp

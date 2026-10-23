@@ -166,7 +166,7 @@ class SuppressionEngine:
                 )
 
         # 3. Scheduled Jobs (for service accounts)
-        if rule in ("excessive_service_privilege", "dormant_admin") and account_id:
+        if rule == "dormant_admin" and account_id:
             # Check if account is tied to a scheduled job
             if not self.scheduled_jobs_df.empty:
                 job_matches = self.scheduled_jobs_df[

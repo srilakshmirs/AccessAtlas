@@ -477,6 +477,13 @@ def get_evaluation(
 
         ml_report = evaluate_ml_pipeline(split=split, config=app_state.config)
         ml_comp_dict = {
+            "ml_alerts_after_suppression": ml_report.ml_alerts_after_suppression,
+            "ml_real_anomalies_flagged": ml_report.ml_real_anomalies_flagged,
+            "ml_normal_flagged": ml_report.ml_normal_flagged,
+            "ml_trap_flagged": ml_report.ml_trap_flagged,
+            "ml_precision": ml_report.ml_precision,
+            "ml_real_anomalies_suppressed": ml_report.ml_real_anomalies_suppressed,
+            "ml_suppressed_identities": ml_report.ml_suppressed_identities,
             "target_scenarios": [
                 {
                     "scenario": s.scenario,

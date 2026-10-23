@@ -95,12 +95,20 @@ npm run dev
 
 The web dashboard is accessible at `http://localhost:5173`.
 
+### 9. Behavioural Anomaly Detection (M5)
+
+Evaluate unsupervised IsolationForest behavioural anomaly detection against the deterministic rules baseline:
+
+```bash
+python -c "from accessatlas.evaluation.ml_metrics import evaluate_ml_pipeline; evaluate_ml_pipeline('train').print_report()"
+```
+
 ---
 
 ## Project structure
 
 ```
-accessatlas/        Python package (ingestion, resolution, evaluation, graph, rules, api)
+accessatlas/        Python package (ingestion, resolution, evaluation, graph, rules, ml, api)
 tests/              pytest tests (uses tests/fixtures/ for fast CI)
 scripts/            Utility scripts (convert_data.py, tune_thresholds.py, evaluate_privilege.py)
 docs/               Architecture, data dictionary, tech stack, ADRs, milestone notes
@@ -123,6 +131,7 @@ docker-compose.yml  Runs backend and frontend services
 | M2 | `m2-resolution` | ✅ Done |
 | M3 | `m3-graph` | ✅ Done |
 | M4 | `m4-rules-api` | ✅ Done |
+| M5 | `feat-ml` | ✅ Done |
 | M6 | `feat-frontend` | ✅ Done |
 
 ---
