@@ -116,6 +116,56 @@ def test_offboarding_gap_suppression_approved_exception():
     assert len(findings) == 0
 
 
+def test_offboarding_gap_unrevoked_record_has_valid_platforms(
+    empty_suppression: SuppressionEngine,
+):
+    """Offboarding record with all_platforms_revoked=False must yield only real platforms (ad/aws/okta)."""
+    hr_df = pd.DataFrame(
+        [{"employee_id": "E100086", "status": "terminated", "termination_date": "2026-04-11"}]
+    )
+    hr_offboarding_df = pd.DataFrame(
+        [
+            {
+                "employee_id": "E100086",
+                "termination_date": "2026-04-11",
+                "ticket_id": "OFF-18795",
+                "ad_disabled_date": "2026-04-13",
+                "okta_deactivated_date": "2026-04-15",
+                "aws_access_removed_date": None,
+                "all_platforms_revoked": False,
+            }
+        ]
+    )
+    resolved_df = pd.DataFrame(
+        [
+            {
+                "identity_id": "E100086",
+                "identity_kind": "human",
+                "ad_account_id": "AD-000086",
+                "aws_user_id": None,
+                "okta_id": "00u1bkb6j906h8hrpn",
+            }
+        ]
+    )
+
+    findings = detect_offboarding_gap(
+        hr_df=hr_df,
+        hr_offboarding_df=hr_offboarding_df,
+        ad_users_df=None,
+        aws_users_df=None,
+        okta_users_df=None,
+        resolved_identities=resolved_df,
+        suppression_engine=empty_suppression,
+        snapshot_date=SNAPSHOT_DATE,
+    )
+
+    assert len(findings) == 1
+    f = findings[0]
+    assert "unrevoked_record" not in f.platforms
+    assert f.platforms == ["aws"]
+    assert all(p in {"ad", "aws", "okta"} for p in f.platforms)
+
+
 # ==============================================================================
 # 2. orphan_account tests
 # ==============================================================================

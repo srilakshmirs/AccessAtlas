@@ -34,16 +34,17 @@ which module uses it, and a one-sentence explanation for a guide/examiner.
 
 ---
 
-## Frontend (added in M4)
+## Frontend (added in M6)
 
-| Library | Why chosen | Module |
-|---------|-----------|--------|
-| **React 18** | Component model for a dynamic findings UI; required by spec. | All frontend components |
-| **Vite** | Fast dev server and build tool for React; much faster than CRA. | Build tooling |
-| **React Router** | Client-side routing for /findings, /identities/:id, /evaluation. | Navigation |
-| **Recharts** | Declarative chart library built on D3 for the evaluation precision/recall charts. | Evaluation page |
-| **React Flow** | Interactive node-edge graph for visualising the privilege path. | Identity detail page |
-| **ESLint** | Lints JavaScript to catch errors and enforce style; run in CI. | Dev tooling |
+| Library | Version | What it is | Why chosen over alternatives | Module(s) that use it | Examiner one-liner |
+|---------|---------|------------|------------------------------|----------------------|-------------------|
+| **React 18** | ≥18.3 | Component-based UI library | Industry-standard declarative component model for building dynamic single-page web applications. Alternatives: Vue, Angular, Svelte. | All frontend components | React provides the reactive component model and state management for rendering live IAM findings and metrics. |
+| **react-dom** | ≥18.3 | DOM renderer for React | Required entrypoint and renderer for mounting React component trees into the browser DOM (`createRoot`). | `frontend/src/main.jsx` | react-dom translates React component definitions into actual browser DOM elements. |
+| **Vite** | ≥5.2 | Next-generation frontend build tool | Extremely fast Hot Module Replacement (HMR) development server and Rollup-based production bundler; far faster and leaner than legacy Create React App or Webpack. | Build and development tooling | Vite provides near-instant local development server reload and minified static asset bundling. |
+| **React Router DOM** | ≥6.23 | Client-side routing library | Standard declarative client-side navigation supporting deep-linked URLs (`/`, `/findings`, `/identities/:id`, `/evaluation`) without page reloads. Alternatives: TanStack Router. | `frontend/src/App.jsx`, `frontend/src/components/Navbar.jsx` | React Router enables smooth multi-page navigation and URL parameter routing within a single-page application. |
+| **Recharts** | ≥2.12 | Composable charting library built on React and D3 | Declarative SVG-based charting components (`PieChart`, `BarChart`, `ResponsiveContainer`) that adapt seamlessly to responsive containers and dynamic light/dark color themes. Alternatives: Chart.js, Victory. | `frontend/src/pages/Overview.jsx` | Recharts renders interactive SVG severity and detection rule distribution charts for security posture analytics. |
+| **@xyflow/react** | ≥12.0 | Node-based workflow and graph diagram library (React Flow) | Powerful, interactive SVG/canvas node-and-edge graph library supporting customizable node cards, animated edges, and auto-zoom for privilege grant chains. Alternatives: Cytoscape.js, Vis.js. | `frontend/src/pages/IdentityDetail.jsx` | React Flow visualizes multi-hop privilege escalation paths as an interactive chain of identities, groups, and permissions. |
+| **ESLint** | ≥8.57 | Static code analysis linter for JavaScript | Enforces clean ES2020 JavaScript syntax, catches unused variables, and verifies React Hooks rules (`eslint-plugin-react-hooks`) in CI. | Dev tooling and CI workflow | ESLint inspects the frontend JavaScript source code for syntax errors and violations of React best practices. |
 
 ---
 
@@ -51,12 +52,12 @@ which module uses it, and a one-sentence explanation for a guide/examiner.
 
 | Tool | Why |
 |------|-----|
-| **Docker** | Reproducible build for backend (and frontend in M4); runs anywhere. |
-| **docker-compose** | Runs both services together with a single command. |
-| **GitHub Actions** | Free CI that runs lint and tests on every push. |
+| **Docker** | Reproducible containerized builds for backend API and frontend Nginx static serving; runs consistently on any host. |
+| **docker-compose** | Orchestrates both backend API and frontend static server services together with a single command. |
+| **GitHub Actions** | Automated CI pipeline that executes linting, code formatting verification, and test suites on every push and pull request. |
 
 ---
 
-_Last updated: M4 (2026-10-22)_
+_Last updated: M6 (2026-10-23)_
 
 

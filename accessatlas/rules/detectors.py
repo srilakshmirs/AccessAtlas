@@ -98,8 +98,43 @@ def detect_offboarding_gap(
         # Check offboarding unrevoked flag if no direct active account found yet
         off_info = offboarding_map.get(eid)
         if not active_plats and off_info and off_info.get("all_platforms_revoked") is False:
-            active_plats.append("unrevoked_record")
-            evidence.append("HR Offboarding record indicates not all platforms were revoked")
+            unrevoked: list[str] = []
+            if pd.isna(off_info.get("ad_disabled_date")):
+                unrevoked.append("ad")
+                evidence.append(
+                    "HR Offboarding record: AD disabled date is missing (account unrevoked)"
+                )
+            if pd.isna(off_info.get("aws_access_removed_date")):
+                unrevoked.append("aws")
+                evidence.append(
+                    "HR Offboarding record: AWS access removal date is missing (account unrevoked)"
+                )
+            if pd.isna(off_info.get("okta_deactivated_date")):
+                unrevoked.append("okta")
+                evidence.append(
+                    "HR Offboarding record: Okta deactivated date is missing (account unrevoked)"
+                )
+
+            # If individual dates are not missing, check which platform accounts the identity owns
+            if not unrevoked:
+                for p_col, p_name in [
+                    ("ad_account_id", "ad"),
+                    ("aws_user_id", "aws"),
+                    ("okta_id", "okta"),
+                ]:
+                    if pd.notna(row.get(p_col)):
+                        unrevoked.append(p_name)
+                evidence.append(
+                    "HR Offboarding record indicates unrevoked platform access across assigned accounts"
+                )
+
+            if not unrevoked:
+                unrevoked = ["ad", "aws", "okta"]
+                evidence.append("HR Offboarding record indicates unrevoked platform access")
+
+            active_plats.extend(unrevoked)
+
+        active_plats = list(dict.fromkeys(active_plats))
 
         if active_plats:
             suppressed, s_reason = suppression_engine.check_suppression(
