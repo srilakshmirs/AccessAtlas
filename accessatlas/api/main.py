@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from accessatlas.api.schemas import (
     EvaluationResponse,
+    FindingExplainResponse,
     HealthResponse,
     IdentityDetail,
     IdentityItem,
@@ -23,6 +24,7 @@ from accessatlas.api.schemas import (
 )
 from accessatlas.graph import build_privilege_graph, compute_identity_privileges
 from accessatlas.ingestion.loader import load_table
+from accessatlas.llm import explain_finding
 from accessatlas.ml import BehavioralAnomalyDetector, extract_behavioral_features
 from accessatlas.resolution import resolve_identities
 from accessatlas.rules.detectors import evaluate_all_rules
@@ -409,6 +411,28 @@ def get_finding(id: str) -> Finding:
             detail=f"Finding '{id}' not found",
         )
     return finding
+
+
+@app.post(
+    "/findings/{id}/explain",
+    response_model=FindingExplainResponse,
+    tags=["Findings"],
+)
+def explain_finding_endpoint(id: str) -> FindingExplainResponse:
+    """Generate or retrieve a plain-English explanation for an existing finding using Ollama.
+
+    Returns HTTP 404 if the finding is unknown.
+    Returns HTTP 200 with available=false if Ollama is offline, unreachable, or times out.
+    """
+    finding = app_state.findings_by_id.get(id)
+    if not finding:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Finding '{id}' not found",
+        )
+
+    res = explain_finding(finding, config=app_state.config)
+    return FindingExplainResponse(**res)
 
 
 @app.get("/evaluation", response_model=EvaluationResponse, tags=["Evaluation"])

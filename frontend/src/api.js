@@ -63,3 +63,42 @@ export async function fetchFinding(id) {
 export async function fetchEvaluation(split = 'train') {
   return apiGet('/evaluation', { split });
 }
+
+async function apiPost(endpoint, body = {}) {
+  const url = `${API_BASE}${endpoint}`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      let errMsg = `Request failed with status ${res.status}`;
+      try {
+        const errorData = await res.json();
+        if (errorData.detail) {
+          errMsg = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+        }
+      } catch {
+        // Fallback to default message
+      }
+      throw new Error(errMsg);
+    }
+
+    return await res.json();
+  } catch (err) {
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      throw new Error(`Unable to connect to AccessAtlas API at ${API_BASE}. Please ensure the backend server is running.`);
+    }
+    throw err;
+  }
+}
+
+export async function explainFinding(id) {
+  return apiPost(`/findings/${encodeURIComponent(id)}/explain`);
+}
+

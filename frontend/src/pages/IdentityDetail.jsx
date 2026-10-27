@@ -7,6 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import Loading from '../components/Loading';
 import ErrorBanner from '../components/ErrorBanner';
 import { SeverityBadge, TierBadge } from '../components/Badges';
+import FindingExplanation from '../components/FindingExplanation';
 
 export default function IdentityDetail() {
   const { id } = useParams();
@@ -14,6 +15,7 @@ export default function IdentityDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [identity, setIdentity] = useState(null);
+  const [selectedFinding, setSelectedFinding] = useState(null);
 
   const loadIdentity = useCallback(async () => {
     try {
@@ -300,6 +302,7 @@ export default function IdentityDetail() {
                   <th>Platforms</th>
                   <th>Confidence / Caveat</th>
                   <th>Remediation / Evidence</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -332,6 +335,17 @@ export default function IdentityDetail() {
                       <td style={{ fontSize: '0.85rem', maxWidth: 320 }} title={firstEvidence}>
                         {firstEvidence}
                       </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => setSelectedFinding(f)}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}
+                        >
+                          <span>✨</span>
+                          <span>Explain in plain English</span>
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -340,6 +354,135 @@ export default function IdentityDetail() {
           </div>
         )}
       </div>
+
+      {/* Finding Detail / Explanation Modal */}
+      {selectedFinding && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'var(--modal-backdrop)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1.5rem',
+          }}
+          onClick={() => setSelectedFinding(null)}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: 700,
+              width: '100%',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              marginBottom: 0,
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-medium)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-header">
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '1.1rem' }}>
+                    {selectedFinding.finding_id}
+                  </span>
+                  <SeverityBadge severity={selectedFinding.severity} />
+                </div>
+                <h3 style={{ fontSize: '1.1rem', marginTop: '0.4rem', color: 'var(--text-primary)' }}>
+                  {selectedFinding.rule.replace(/_/g, ' ')}
+                </h3>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setSelectedFinding(null)}
+              >
+                &times; Close
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <strong>Identity: </strong>
+                <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                  {identity.identity_id}
+                </span>
+              </div>
+
+              {selectedFinding.evidence && selectedFinding.evidence.length > 0 && (
+                <div>
+                  <strong>Evidence Statements:</strong>
+                  <ul style={{ marginTop: '0.4rem', paddingLeft: '1.25rem', color: 'var(--text-secondary)' }}>
+                    {selectedFinding.evidence.map((item, idx) => (
+                      <li key={idx} style={{ marginBottom: '0.35rem' }}>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {selectedFinding.confidence_caveat && (
+                <div style={{
+                  backgroundColor: 'var(--badge-caveat-bg)',
+                  border: '1px solid var(--badge-caveat-border)',
+                  padding: '0.75rem 1rem',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--badge-caveat-text)',
+                  fontSize: '0.875rem'
+                }}>
+                  <strong>Confidence Caveat: </strong>
+                  {selectedFinding.confidence_caveat}
+                </div>
+              )}
+
+              {selectedFinding.recommended_action && (
+                <div style={{
+                  backgroundColor: 'var(--status-success-bg)',
+                  border: '1px solid var(--status-success-border)',
+                  padding: '0.75rem 1rem',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--status-success-text)',
+                  fontSize: '0.875rem'
+                }}>
+                  <strong>Recommended Remediation: </strong>
+                  {selectedFinding.recommended_action}
+                </div>
+              )}
+
+              {selectedFinding.privilege_path && (
+                <div>
+                  <strong>Privilege Path: </strong>
+                  <div style={{
+                    marginTop: '0.4rem',
+                    padding: '0.5rem 0.75rem',
+                    background: 'var(--bg-subtle)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontFamily: 'monospace',
+                    fontSize: '0.85rem',
+                    color: 'var(--text-primary)',
+                  }}>
+                    {Array.isArray(selectedFinding.privilege_path)
+                      ? selectedFinding.privilege_path.join(' -> ')
+                      : String(selectedFinding.privilege_path)}
+                  </div>
+                </div>
+              )}
+
+              {/* Plain English AI Explanation (M9) */}
+              <FindingExplanation findingId={selectedFinding.finding_id} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
