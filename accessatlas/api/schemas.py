@@ -90,3 +90,13 @@ class EvaluationResponse(BaseModel):
     scenarios: dict[str, ScenarioMetricItem]
     traps: dict[str, TrapMetricItem]
     ml_comparison: dict[str, Any] | None = None
+
+
+class FindingExplainResponse(BaseModel):
+    """Plain-English LLM explanation of a security finding."""
+
+    finding_id: str
+    explanation: str
+    model: str
+    generated_by: str = "ollama"
+    available: bool

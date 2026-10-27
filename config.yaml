@@ -39,4 +39,11 @@ ml:
   alert_budget_percentile: 2.0
   random_state: 42
   n_estimators: 100
+llm:
+  enabled: true
+  base_url: http://localhost:11434
+  model: llama3.2:latest
+  timeout_seconds: 60
+  max_input_chars: 1200
+
 

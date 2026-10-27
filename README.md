@@ -103,12 +103,25 @@ Evaluate unsupervised IsolationForest behavioural anomaly detection against the 
 python -c "from accessatlas.evaluation.ml_metrics import evaluate_ml_pipeline; evaluate_ml_pipeline('train').print_report()"
 ```
 
+### 10. Local AI Explanations with Ollama (M9)
+
+Generate plain-English finding summaries locally without cloud API dependencies:
+
+```bash
+# Ensure Ollama is installed and running with the compact llama3.2 model:
+ollama run llama3.2 "Say hello in one sentence."
+
+# Start backend and frontend, then click "Explain in plain English" on any finding
+```
+
+> **Why Ollama?** Ollama runs 100% locally on your machine (`http://localhost:11434`), making AI explanations completely **free, private, and offline** — sensitive identity records and audit findings never leave your infrastructure. The LLM is used **strictly to explain** existing findings in plain English for security analysts; it is **never** used for detection, scoring, or severity assignment. If Ollama is offline, the API and dashboard continue operating seamlessly with a graceful fallback.
+
 ---
 
 ## Project structure
 
 ```
-accessatlas/        Python package (ingestion, resolution, evaluation, graph, rules, ml, api)
+accessatlas/        Python package (ingestion, resolution, evaluation, graph, rules, ml, llm, api)
 tests/              pytest tests (uses tests/fixtures/ for fast CI)
 scripts/            Utility scripts (convert_data.py, tune_thresholds.py, evaluate_privilege.py)
 docs/               Architecture, data dictionary, tech stack, ADRs, milestone notes
@@ -133,6 +146,7 @@ docker-compose.yml  Runs backend and frontend services
 | M4 | `m4-rules-api` | ✅ Done |
 | M5 | `feat-ml` | ✅ Done |
 | M6 | `feat-frontend` | ✅ Done |
+| M9 | `feat-ollama` | ✅ Done |
 
 ---
 
@@ -142,3 +156,5 @@ docker-compose.yml  Runs backend and frontend services
   them. CI enforces this automatically (`tests/test_gt_isolation.py`).
 - **Never commit data files.** `data/` is gitignored; only `tests/fixtures/` is committed.
 - **Never auto-revoke access.** The system recommends remediation; humans act.
+- **LLM is explanation-only.** Ollama is never used for detection, scoring, or severity.
+

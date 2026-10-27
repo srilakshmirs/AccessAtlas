@@ -4,6 +4,7 @@ import { fetchFindings } from '../api';
 import Loading from '../components/Loading';
 import ErrorBanner from '../components/ErrorBanner';
 import { SeverityBadge } from '../components/Badges';
+import FindingExplanation from '../components/FindingExplanation';
 
 const ALL_RULES = [
   { value: '', label: 'All Rules' },
@@ -413,6 +414,9 @@ export default function Findings() {
                   </div>
                 </div>
               )}
+
+              {/* Plain English AI Explanation (M9) */}
+              <FindingExplanation findingId={selectedFinding.finding_id} />
             </div>
           </div>
         </div>

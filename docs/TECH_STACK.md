@@ -49,16 +49,18 @@ which module uses it, and a one-sentence explanation for a guide/examiner.
 
 ---
 
-## Infrastructure
+## Infrastructure & Local AI Runtime
 
-| Tool | Why |
-|------|-----|
+| Tool / Runtime | Why |
+|----------------|-----|
 | **Docker** | Reproducible containerized builds for backend API and frontend Nginx static serving; runs consistently on any host. |
 | **docker-compose** | Orchestrates both backend API and frontend static server services together with a single command. |
 | **GitHub Actions** | Automated CI pipeline that executes linting, code formatting verification, and test suites on every push and pull request. |
+| **Ollama** (optional) | Local LLM runtime hosting `llama3.2:latest` (or `llama3.2`) at `http://localhost:11434`. Why chosen: **100% free, private, offline** — sensitive identity, account, and audit metadata never leave the local machine. Accessed purely via Python's standard library (`urllib.request`), requiring zero additional Python or JS dependencies. Used strictly for plain-English explanation of existing findings; never used for detection, scoring, or severity calculation. |
 
 ---
 
-_Last updated: M6 (2026-10-23)_
+_Last updated: M9 (2026-10-27)_
+
 
 
