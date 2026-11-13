@@ -10,7 +10,6 @@ import json
 from pathlib import Path
 
 import pandas as pd
-import pytest
 
 from accessatlas.normalization.common import (
     DeterministicIdGenerator,

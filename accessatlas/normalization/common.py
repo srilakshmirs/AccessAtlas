@@ -42,7 +42,7 @@ def load_normalization_config(config_path: Path | str | None = None) -> dict[str
     path = Path(config_path)
     if not path.is_file():
         return {}
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
 
 
@@ -188,9 +188,7 @@ def normalize_datetime(
             unparsed = to_parse.index[parsed[to_parse.index].isna()]
             if len(unparsed) == 0:
                 break
-            attempt = pd.to_datetime(
-                to_parse.loc[unparsed], format=fmt, errors="coerce", utc=True
-            )
+            attempt = pd.to_datetime(to_parse.loc[unparsed], format=fmt, errors="coerce", utc=True)
             valid = attempt.notna()
             if valid.any():
                 parsed.loc[unparsed[valid]] = attempt[valid].dt.tz_localize(None)
@@ -289,9 +287,7 @@ def normalize_tier(
     return res, valid_count
 
 
-def deduplicate_rows(
-    df: pd.DataFrame, subset: list[str] | None = None
-) -> tuple[pd.DataFrame, int]:
+def deduplicate_rows(df: pd.DataFrame, subset: list[str] | None = None) -> tuple[pd.DataFrame, int]:
     """Remove exact duplicate rows and return (deduped_df, duplicates_removed_count)."""
     initial_rows = len(df)
     deduped = df.drop_duplicates(subset=subset).copy()
@@ -360,7 +356,7 @@ class DeterministicIdGenerator:
             return raw_str
 
         # Generate deterministic 6-digit hex or integer derived from MD5 hash
-        digest = hashlib.md5(f"{plat}:{raw_str}".encode("utf-8")).hexdigest()
+        digest = hashlib.md5(f"{plat}:{raw_str}".encode()).hexdigest()
         numeric_id = int(digest[:8], 16) % 1000000
 
         if prefix is not None:
