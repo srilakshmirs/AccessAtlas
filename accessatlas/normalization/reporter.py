@@ -123,4 +123,3 @@ class QualityReporter:
         md_path.write_text(self.to_markdown(), encoding="utf-8")
 
         return json_path, md_path
-
