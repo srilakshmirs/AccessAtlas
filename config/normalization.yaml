@@ -1,0 +1,138 @@
+# Data Normalization Configuration for AccessAtlas
+# Config-driven mappings for Dataset C (variant) and Dataset A (baseline)
+
+common:
+  missing_markers:
+    - "n/a"
+    - "na"
+    - "n.a."
+    - "none"
+    - "null"
+    - "-"
+    - ""
+    - "undefined"
+  boolean_mapping:
+    "true": true
+    "false": false
+    "1": true
+    "0": false
+    "yes": true
+    "no": false
+    "y": true
+    "n": false
+    "t": true
+    "f": false
+  status_mapping:
+    "active": "active"
+    "activated": "active"
+    "enabled": "active"
+    "terminated": "terminated"
+    "deprovisioned": "terminated"
+    "disabled": "terminated"
+    "on leave": "on_leave"
+    "on_leave": "on_leave"
+    "on-leave": "on_leave"
+    "suspended": "terminated"
+    "expired": "expired"
+    "revoked": "revoked"
+  worker_type_mapping:
+    "employee": "employee"
+    "contractor": "contractor"
+    "external": "contractor"
+    "temp": "contractor"
+    "intern": "employee"
+  platform_mapping:
+    "ad": "ad"
+    "active directory": "ad"
+    "activedirectory": "ad"
+    "aws": "aws"
+    "aws iam": "aws"
+    "aws_iam": "aws"
+    "okta": "okta"
+  result_mapping:
+    "success": "success"
+    "successful": "success"
+    "allow": "success"
+    "failure": "failure"
+    "failed": "failure"
+    "deny": "failure"
+  tier_scale:
+    min_tier: 0
+    max_tier: 3
+    no_access_tier: 9
+    text_tier_mapping:
+      "tier-0 administrator": 0
+      "tier-0": 0
+      "tier 0": 0
+      "administrator": 0
+      "admin": 0
+      "tier-1 administrator": 1
+      "tier-1": 1
+      "tier 1": 1
+      "poweruser": 1
+      "powerusers": 1
+      "delegated admin": 2
+      "tier-2": 2
+      "tier 2": 2
+      "standard": 3
+      "tier-3": 3
+      "tier 3": 3
+      "readonly": 3
+      "read-only": 3
+      "no access": 9
+      "no_access": 9
+
+datasets:
+  dataset_c:
+    name: "dataset_c"
+    raw_dir: "data/external/dataset_c"
+    output_dir: "data/normalized/dataset_c"
+    files:
+      hr_system: "hr_system.xlsx"
+      ad_users: "ad_users.csv"
+      ad_groups: "ad_groups.csv"
+      ad_group_membership: "ad_group_membership.csv"
+      aws_credential_report: "aws_credential_report.csv"
+      aws_groups: "aws_groups.csv"
+      aws_policies: "aws_policies.csv"
+      aws_user_group_links: "aws_user_group_links.csv"
+      aws_direct_policy_attachments: "aws_direct_policy_attachments.csv"
+      aws_nested_group_membership: "aws_nested_group_membership.csv"
+      okta_export: "okta_export.json"
+      activity_events: "activity_events.csv"
+      service_account_inventory: "service_account_inventory.csv"
+      api_tokens: "api_tokens.csv"
+      scheduled_jobs: "scheduled_jobs.csv"
+      access_exceptions: "access_exceptions.csv"
+      on_call_roster: "on_call_roster.csv"
+      tier_mapping: "tier_mapping.csv"
+    scheduled_job_link:
+      strip_suffix: "-job"
+    date_formats:
+      hr: "%d-%b-%Y"
+      ad: "%m/%d/%Y %H:%M:%S"
+
+  dataset_a:
+    name: "dataset_a"
+    raw_dir: "data/external/dataset_a"
+    output_dir: "data/normalized/dataset_a"
+    files:
+      hr_system_export: "hr_system_export.xlsx"
+      active_directory_users: "active_directory_users.csv"
+      active_directory_groups: "active_directory_groups.csv"
+      active_directory_memberships: "active_directory_memberships.csv"
+      aws_iam_credential_report: "aws_iam_credential_report.csv"
+      aws_iam_groups: "aws_iam_groups.csv"
+      aws_iam_policies: "aws_iam_policies.csv"
+      aws_iam_user_group_memberships: "aws_iam_user_group_memberships.csv"
+      aws_iam_user_tags: "aws_iam_user_tags.csv"
+      okta_directory_export: "okta_directory_export.json"
+      service_accounts_inventory: "service_accounts_inventory.csv"
+      service_account_api_tokens: "service_account_api_tokens.csv"
+      approved_access_exceptions: "approved_access_exceptions.csv"
+      security_oncall_roster: "security_oncall_roster.csv"
+      system_activity_events: "system_activity_events.csv"
+    date_formats:
+      hr: "%d-%b-%Y"
+      ad: "%m/%d/%Y %H:%M:%S"
+
