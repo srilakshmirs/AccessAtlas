@@ -26,7 +26,6 @@ from accessatlas.normalization.common import (
     normalize_missing,
     normalize_name,
     normalize_tier,
-    normalize_whitespace,
     parse_time_window,
 )
 from accessatlas.normalization.reporter import QualityReporter
@@ -91,7 +90,11 @@ def normalize_dataset_c(
             s_id = str(row["service_account_id"]).strip()
             name = str(row["account_name"]).strip()
             sys_val = str(row["system"]).strip().upper()
-            owner = str(row["owner_employee_id"]).strip() if pd.notna(row.get("owner_employee_id")) else None
+            owner = (
+                str(row["owner_employee_id"]).strip()
+                if pd.notna(row.get("owner_employee_id"))
+                else None
+            )
 
             svc_info[s_id] = {
                 "system": sys_val.lower(),
@@ -137,16 +140,22 @@ def normalize_dataset_c(
         df_hr["last_name"], fix_cnt = normalize_name(df_hr["last_name"])
         t_hr.record_fix("name_normalized", fix_cnt)
 
-        df_hr["worker_type"], fix_cnt = normalize_categorical(df_hr["worker_type"], worker_map, default="employee")
+        df_hr["worker_type"], fix_cnt = normalize_categorical(
+            df_hr["worker_type"], worker_map, default="employee"
+        )
         t_hr.record_fix("worker_type_mapped", fix_cnt)
 
-        df_hr["status"], fix_cnt = normalize_categorical(df_hr["status"], status_map, default="active")
+        df_hr["status"], fix_cnt = normalize_categorical(
+            df_hr["status"], status_map, default="active"
+        )
         t_hr.record_fix("status_mapped", fix_cnt)
 
         df_hr["hire_date"], fix_cnt = normalize_datetime(df_hr["hire_date"], ["%d-%b-%Y"])
         t_hr.record_fix("hire_date_parsed", fix_cnt)
 
-        df_hr["termination_date"], fix_cnt = normalize_datetime(df_hr["termination_date"], ["%d-%b-%Y"])
+        df_hr["termination_date"], fix_cnt = normalize_datetime(
+            df_hr["termination_date"], ["%d-%b-%Y"]
+        )
         t_hr.record_fix("termination_date_parsed", fix_cnt)
 
         df_hr, dedup_cnt = deduplicate_rows(df_hr, subset=["employee_id"])
@@ -214,7 +223,12 @@ def normalize_dataset_c(
             }
         )
 
-        for col in ["termination_date", "ad_disabled_date", "okta_deactivated_date", "aws_access_removed_date"]:
+        for col in [
+            "termination_date",
+            "ad_disabled_date",
+            "okta_deactivated_date",
+            "aws_access_removed_date",
+        ]:
             df_off[col], fix_cnt = normalize_datetime(df_off[col], ["%d-%b-%Y"])
             t_off.record_fix(f"{col}_parsed", fix_cnt)
 
@@ -257,14 +271,21 @@ def normalize_dataset_c(
         t_ad_u.record_fix("email_normalized", fix_cnt)
 
         df_ad["employee_id"] = (
-            df_ad["employeeID"].astype(str).str.strip().replace(list(common_cfg.get("missing_markers", [])), pd.NA)
+            df_ad["employeeID"]
+            .astype(str)
+            .str.strip()
+            .replace(list(common_cfg.get("missing_markers", [])), pd.NA)
         )
 
         # Datetime coercion
-        df_ad["created_at"], fix_cnt = normalize_datetime(df_ad["whenCreated"], ["%m/%d/%Y %H:%M:%S"])
+        df_ad["created_at"], fix_cnt = normalize_datetime(
+            df_ad["whenCreated"], ["%m/%d/%Y %H:%M:%S"]
+        )
         t_ad_u.record_fix("created_at_parsed", fix_cnt)
 
-        df_ad["last_logon"], fix_cnt = normalize_datetime(df_ad["lastLogonTimestamp"], ["%m/%d/%Y %H:%M:%S"])
+        df_ad["last_logon"], fix_cnt = normalize_datetime(
+            df_ad["lastLogonTimestamp"], ["%m/%d/%Y %H:%M:%S"]
+        )
         t_ad_u.record_fix("last_logon_parsed", fix_cnt)
 
         # Boolean enabled from userAccountControl
@@ -395,7 +416,10 @@ def normalize_dataset_c(
         df_aws["arn"] = df_aws["arn"].astype(str).str.strip()
 
         df_aws["tag_employee_id"] = (
-            df_aws["tag_employee_id"].astype(str).str.strip().replace(list(common_cfg.get("missing_markers", [])), pd.NA)
+            df_aws["tag_employee_id"]
+            .astype(str)
+            .str.strip()
+            .replace(list(common_cfg.get("missing_markers", [])), pd.NA)
         )
         df_aws["tag_email"], fix_cnt = normalize_email(df_aws["tag_email"])
         t_aws_u.record_fix("tag_email_normalized", fix_cnt)
@@ -609,8 +633,12 @@ def normalize_dataset_c(
         df_okta_u["email"], fix_cnt = normalize_email(df_okta_u["email"])
         t_okta_u.record_fix("email_normalized", fix_cnt)
 
-        df_okta_u["created_at"] = pd.to_datetime(df_okta_u["created_at"], utc=True).dt.tz_localize(None)
-        df_okta_u["last_login"] = pd.to_datetime(df_okta_u["last_login"], utc=True).dt.tz_localize(None)
+        df_okta_u["created_at"] = pd.to_datetime(df_okta_u["created_at"], utc=True).dt.tz_localize(
+            None
+        )
+        df_okta_u["last_login"] = pd.to_datetime(df_okta_u["last_login"], utc=True).dt.tz_localize(
+            None
+        )
         t_okta_u.columns_unavailable.extend(["created_at", "last_login"])
 
         df_okta_u, dedup_cnt = deduplicate_rows(df_okta_u, subset=["okta_id"])
@@ -691,7 +719,9 @@ def normalize_dataset_c(
                 }
             )
         df_okta_ar = pd.DataFrame(ar_records)
-        df_okta_ar["assigned_at"] = pd.to_datetime(df_okta_ar["assigned_at"], utc=True).dt.tz_localize(None)
+        df_okta_ar["assigned_at"] = pd.to_datetime(
+            df_okta_ar["assigned_at"], utc=True
+        ).dt.tz_localize(None)
         t_okta_ar.columns_unavailable.append("assigned_at")
 
         df_okta_ar, dedup_cnt = deduplicate_rows(df_okta_ar, subset=["okta_id", "admin_role"])
@@ -851,7 +881,9 @@ def normalize_dataset_c(
         t_exc.record_fix("end_date_parsed", fix_cnt)
 
         # Status mapping (APPROVED -> active, EXPIRED_REVOKED -> revoked)
-        df_exc["status"], fix_cnt = normalize_categorical(df_exc["status"], status_map, default="active")
+        df_exc["status"], fix_cnt = normalize_categorical(
+            df_exc["status"], status_map, default="active"
+        )
         t_exc.record_fix("status_mapped", fix_cnt)
 
         # Platforms column preserved for rules evaluation
@@ -919,7 +951,12 @@ def normalize_dataset_c(
             df_job["expected_source_ip"] = df_job["expected_source_ip"].astype(str).str.strip()
 
         # Link scheduled job to service_account_id by stripping -job suffix
-        strip_sfx = cfg.get("datasets", {}).get("dataset_c", {}).get("scheduled_job_link", {}).get("strip_suffix", "-job")
+        strip_sfx = (
+            cfg.get("datasets", {})
+            .get("dataset_c", {})
+            .get("scheduled_job_link", {})
+            .get("strip_suffix", "-job")
+        )
         svc_ids = []
         for jname in df_job["job_name"]:
             key = jname
@@ -988,7 +1025,9 @@ def normalize_dataset_c(
         df_evt["event_type"] = df_evt["event_type"].astype(str).str.strip()
         df_evt["category"] = df_evt["category"].astype(str).str.strip()
         df_evt["resource"] = df_evt["resource"].astype(str).str.strip()
-        df_evt["result"], fix_cnt = normalize_categorical(df_evt["result"], result_map, default="failure")
+        df_evt["result"], fix_cnt = normalize_categorical(
+            df_evt["result"], result_map, default="failure"
+        )
         t_evt.record_fix("result_mapped", fix_cnt)
 
         if "source_ip" in df_evt.columns:
@@ -1014,6 +1053,10 @@ def normalize_dataset_c(
     # -------------------------------------------------------------------------
     id_gen.export_id_map(out_path / "id_map.csv")
     reporter.write_reports(out_path)
-    logger.info("Normalization complete for %s. Quality report written to %s", reporter.dataset_name, out_path)
+    logger.info(
+        "Normalization complete for %s. Quality report written to %s",
+        reporter.dataset_name,
+        out_path,
+    )
 
     return reporter
