@@ -1,0 +1,46 @@
+{
+  "groups": [
+    {"id": "grp-admin", "name": "Okta-Admins"},
+    {"id": "grp-dev", "name": "Developers"}
+  ],
+  "users": [
+    {
+      "id": "okta-u001",
+      "status": "ACTIVE",
+      "profile": {
+        "login": "alice.smith@acme.example",
+        "email": "alice.smith@acme.example",
+        "firstName": "Alice",
+        "lastName": "Smith",
+        "employeeNumber": "E100001",
+        "department": "Engineering",
+        "title": "Engineer"
+      }
+    },
+    {
+      "id": "okta-u002",
+      "status": "DEPROVISIONED",
+      "profile": {
+        "login": "bob.jones@acme.example",
+        "email": "bob.jones@acme.example",
+        "firstName": "Bob",
+        "lastName": "Jones",
+        "employeeNumber": "E100002",
+        "department": "HR",
+        "title": "Analyst"
+      }
+    }
+  ],
+  "group_memberships": [
+    {"group": "grp-dev", "userId": "okta-u001"}
+  ],
+  "admin_role_assignments": [
+    {"userId": "okta-u002", "role": "SUPER_ADMIN", "scope": "ORG"}
+  ],
+  "app_assignments": [
+    {"userId": "okta-u001", "app": "GitHub", "status": "ASSIGNED"}
+  ],
+  "group_aws_role_mapping": [
+    {"okta_group": "Okta-Admins", "aws_role": "OrganizationAdmin", "tier": 0}
+  ]
+}

@@ -1,0 +1,4 @@
+sAMAccountName,userPrincipalName,displayName,mail,employeeID,whenCreated,lastLogonTimestamp,userAccountControl
+asmith,asmith@acme.example,Alice Smith,alice.smith@acme.example,E100001,01/15/2020 08:00:00,10/01/2026 09:00:00,NORMAL_ACCOUNT
+bjones,bjones@acme.example,Bob Jones,bob.jones@acme.example,E100002,03/20/2019 08:00:00,09/10/2026 10:00:00,ACCOUNTDISABLE
+svc-deploy-001,svc-deploy-001@acme.example,Deploy Bot,N/A,N/A,01/01/2023 00:00:00,10/01/2026 00:00:00,NORMAL_ACCOUNT

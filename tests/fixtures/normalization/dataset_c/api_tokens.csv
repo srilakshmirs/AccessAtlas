@@ -1,0 +1,2 @@
+token_id,service_account_id,created,last_rotated,last_used,last_used_ip,scope,status
+TKN-001,SVC0001,2025-01-01T00:00:00Z,2026-01-01T00:00:00Z,2026-10-01T00:00:00Z,10.0.0.5,admin:*,ACTIVE
