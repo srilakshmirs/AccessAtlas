@@ -1,0 +1,2 @@
+policy_name,tier,policy_type,document
+AdministratorAccess,0,AWS Managed,"{"" Statement\:\Allow *\}"

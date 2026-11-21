@@ -1,0 +1,2 @@
+employee_id,platform,privilege,ticket,approver,start_date,end_date,status
+E100001,aws,temporary admin,TKT-EXC-001,E100000,2026-01-01T00:00:00Z,2026-12-31T00:00:00Z,APPROVED

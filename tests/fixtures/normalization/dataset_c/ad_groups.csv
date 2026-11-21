@@ -1,0 +1,3 @@
+group_name,distinguishedName,privilege_tier
+Domain Admins,"CN=Domain Admins,DC=acme,DC=example",tier-0 administrator
+Developers,"CN=Developers,DC=acme,DC=example",tier-3

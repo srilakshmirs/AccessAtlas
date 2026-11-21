@@ -47,15 +47,26 @@ def load_normalization_config(config_path: Path | str | None = None) -> dict[str
 
 
 def normalize_missing(
-    series: pd.Series, markers: frozenset[str] | set[str] | None = None
-) -> tuple[pd.Series, int]:
+    data: pd.Series | pd.DataFrame, markers: frozenset[str] | set[str] | None = None
+) -> tuple[pd.Series | pd.DataFrame, int]:
     """Replace missing value representations with pd.NA or np.nan.
 
-    Returns the cleaned series and the count of cells transformed into null.
+    Accepts either a pd.Series or a pd.DataFrame.
+    Returns the cleaned data and the count of cells transformed into null.
     """
     if markers is None:
         markers = DEFAULT_MISSING_MARKERS
 
+    if isinstance(data, pd.DataFrame):
+        total_count = 0
+        res = data.copy()
+        for col in res.columns:
+            cleaned_col, cnt = normalize_missing(res[col], markers=markers)
+            res[col] = cleaned_col
+            total_count += cnt
+        return res, total_count
+
+    series = data
     # Fast path: check string representation
     str_series = series.astype(str).str.strip().str.lower()
     mask_to_nullify = str_series.isin(markers) & series.notna()
@@ -336,43 +347,57 @@ class DeterministicIdGenerator:
     def __init__(self) -> None:
         # key: (platform, raw_id) -> canonical_id
         self.mapping: dict[tuple[str, str], str] = {}
+        # canonical_id -> key (for collision avoidance)
+        self.used_ids: dict[str, tuple[str, str]] = {}
 
     def get_or_generate_id(self, platform: str, raw_key: str, prefix: str | None = None) -> str:
         """Return existing mapped canonical ID or generate a stable deterministic ID."""
-        key = (platform.lower(), str(raw_key).strip())
+        plat = platform.lower().strip()
+        raw_str = str(raw_key).strip()
+        key = (plat, raw_str)
         if key in self.mapping:
             return self.mapping[key]
 
         # If raw_key already matches the expected canonical pattern, retain it
-        raw_str = str(raw_key).strip()
-        plat = platform.lower()
-
         if plat == "ad" and re.match(r"^AD-\d{6}$", raw_str):
             self.mapping[key] = raw_str
+            self.used_ids[raw_str] = key
             return raw_str
 
         if plat == "aws" and re.match(r"^AWS-USR-\d{6}$", raw_str):
             self.mapping[key] = raw_str
+            self.used_ids[raw_str] = key
             return raw_str
 
-        # Generate deterministic 6-digit hex or integer derived from MD5 hash
-        digest = hashlib.md5(f"{plat}:{raw_str}".encode()).hexdigest()
-        numeric_id = int(digest[:8], 16) % 1000000
-
+        # Determine target prefix
         if prefix is not None:
-            canonical_id = f"{prefix}{numeric_id:06d}"
+            pfx = prefix
         elif plat == "ad":
-            canonical_id = f"AD-{numeric_id:06d}"
+            pfx = "AD-"
         elif plat == "aws":
-            canonical_id = f"AWS-USR-{numeric_id:06d}"
+            pfx = "AWS-USR-"
         elif plat == "okta":
-            # Okta IDs typically start with 00u
-            canonical_id = f"00u{digest[:17]}"
+            pfx = "00u"
         else:
-            canonical_id = f"{plat.upper()}-{numeric_id:06d}"
+            pfx = f"{plat.upper()}-"
 
-        self.mapping[key] = canonical_id
-        return canonical_id
+        # Deterministic generation with collision resolution
+        count = 0
+        while True:
+            suffix = f":{count}" if count > 0 else ""
+            digest = hashlib.md5(f"{plat}:{raw_str}{suffix}".encode()).hexdigest()
+            if pfx == "00u":
+                canonical_id = f"00u{digest[:17]}"
+            else:
+                num = int(digest[:8], 16) % 1000000
+                canonical_id = f"{pfx}{num:06d}"
+
+            if canonical_id not in self.used_ids or self.used_ids[canonical_id] == key:
+                self.used_ids[canonical_id] = key
+                self.mapping[key] = canonical_id
+                return canonical_id
+
+            count += 1
 
     def export_id_map(self, output_file: Path | str) -> Path:
         """Export the generated ID map to id_map.csv."""

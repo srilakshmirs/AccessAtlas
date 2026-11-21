@@ -35,6 +35,17 @@ common:
     "suspended": "terminated"
     "expired": "expired"
     "revoked": "revoked"
+    "approved": "active"
+    "expired_revoked": "revoked"
+  token_scope_mapping:
+    "admin:*": 0
+    "deploy:prod": 1
+    "write:records": 2
+    "read:records": 3
+  aws_group_policy_mapping:
+    "Administrators": "AdministratorAccess"
+    "PowerUsers": "PowerUserAccess"
+    "ReadOnly": "ReadOnlyAccess"
   worker_type_mapping:
     "employee": "employee"
     "contractor": "contractor"

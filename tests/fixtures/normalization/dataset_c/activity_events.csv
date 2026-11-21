@@ -1,0 +1,4 @@
+event_id,system,account_id,event_type,category,resource,timestamp_epoch,timestamp_utc,result,source_ip,country,user_agent,bytes_transferred,mfa_used,privileged_action
+EVT-001,AD,asmith,LOGON,AUTHENTICATION,LDAP,1759392000,2026-10-01T09:00:00Z,SUCCESS,10.0.0.1,US,agent,0,True,False
+EVT-002,AWS,asmith,AssumeRole,IAM,AdminRole,1759478400,2026-10-02T09:00:00Z,SUCCESS,10.0.0.2,US,agent,0,True,True
+EVT-003,OKTA,ghostuser,LOGIN,AUTHENTICATION,N/A,1759564800,2026-10-03T09:00:00Z,FAILURE,10.0.0.9,XX,agent,0,False,False
